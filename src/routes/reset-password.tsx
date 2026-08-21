@@ -92,12 +92,12 @@ function ResetPasswordPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({
+    const { data: updated, error } = await supabase.auth.updateUser({
       password,
       data: { must_change_password: false },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       const msg = error.message.toLowerCase();
       if (msg.includes("different from the old") || msg.includes("should be different")) {
         toast.error("A nova senha deve ser diferente da senha anterior.");
@@ -108,9 +108,27 @@ function ResetPasswordPage() {
       }
       return;
     }
+
+    // Confirma no servidor que a exigência de troca foi realmente removida,
+    // para que o usuário não caia novamente na tela de troca obrigatória.
+    const { data: refreshed } = await supabase.auth.getUser();
+    if (refreshed.user?.user_metadata?.must_change_password === true) {
+      await supabase.auth.updateUser({ data: { must_change_password: false } });
+    }
+    setLoading(false);
+
+    void logAuthEvent({
+      data: {
+        action: "password_reset_completed",
+        email: updated.user?.email ?? null,
+        userId: updated.user?.id ?? null,
+      },
+    });
+
     toast.success("Senha atualizada com sucesso");
     navigate({ to: "/" });
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
