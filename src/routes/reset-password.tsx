@@ -116,7 +116,18 @@ function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">Redefinir senha</h1>
-        {!ready ? (
+        {linkError ? (
+          <div className="bg-card border rounded-2xl p-6 space-y-4 text-sm text-center">
+            <p className="text-destructive">{linkError}</p>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/auth" })}
+              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Ir para o login
+            </button>
+          </div>
+        ) : !ready ? (
           <div className="bg-card border rounded-2xl p-6 text-sm text-muted-foreground text-center">
             Abra esta página pelo link enviado ao seu e-mail para definir uma nova senha.
           </div>
