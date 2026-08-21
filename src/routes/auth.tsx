@@ -5,6 +5,8 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { logAuthEvent } from "@/lib/audit.functions";
+import { loginSuccessFeedback } from "@/lib/must-change-password";
+
 
 
 export const Route = createFileRoute("/auth")({
@@ -79,7 +81,13 @@ function AuthPage() {
       void logAuthEvent({
         data: { action: "login", email, userId: data.user?.id ?? null },
       });
+      // Confere a marca de troca obrigatória direto no servidor para dar um
+      // retorno preciso sobre pendências.
+      const { data: fresh } = await supabase.auth.getUser();
+      const feedback = loginSuccessFeedback(fresh.user ?? data.user);
+      toast.success(feedback.title, { description: feedback.description });
       navigate({ to: "/" });
+
     } catch (err) {
       const type = classifyAuthError(err);
       setAuthError(type);
