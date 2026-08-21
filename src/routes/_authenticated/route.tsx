@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -98,8 +98,21 @@ function AuthenticatedLayout() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mustChange, setMustChange] = useState<boolean>(
+    session?.user?.user_metadata?.must_change_password === true,
+  );
 
-  const mustChange = session?.user?.user_metadata?.must_change_password === true;
+  // Confirma a marca diretamente no servidor (o token local pode estar defasado).
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setMustChange(data.user?.user_metadata?.must_change_password === true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,27 +127,36 @@ function AuthenticatedLayout() {
 
     setSaving(true);
     try {
-      // Impede reutilizar a senha temporária: se o login com a "nova" senha
-      // funcionar, ela é a mesma senha atual (temporária).
-      const email = session?.user?.email;
-      if (email) {
-        const { error: reuseErr } = await supabase.auth.signInWithPassword({
-          email,
-          password: newPassword,
-        });
-        if (!reuseErr) {
+      // 1) Troca a senha. O próprio servidor recusa se for igual à atual.
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("different from the old") || msg.includes("should be different")) {
           toast.error("A nova senha não pode ser igual à senha temporária. Escolha uma senha diferente.");
-          setSaving(false);
-          return;
+        } else if (msg.includes("weak") || msg.includes("pwned") || msg.includes("compromised")) {
+          toast.error("Escolha uma senha mais forte — esta é muito comum ou vazada.");
+        } else {
+          toast.error(error.message || "Erro ao alterar a senha.");
         }
+        setSaving(false);
+        return;
       }
 
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-        data: { must_change_password: false }
+      // 2) Limpa a marca de troca obrigatória em chamada separada e confirma.
+      const { error: metaErr } = await supabase.auth.updateUser({
+        data: { must_change_password: false },
       });
-      if (error) throw error;
+      if (metaErr) throw metaErr;
+
+      const { data: refreshed } = await supabase.auth.getUser();
+      if (refreshed.user?.user_metadata?.must_change_password === true) {
+        toast.error("Senha alterada, mas a exigência de troca não pôde ser removida. Entre em contato com o suporte.");
+        setSaving(false);
+        return;
+      }
+
       toast.success("Senha alterada com sucesso!");
+      setMustChange(false);
       window.location.reload();
     } catch (err: any) {
       toast.error(err.message || "Erro ao alterar a senha.");
