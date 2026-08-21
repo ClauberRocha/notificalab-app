@@ -158,9 +158,18 @@ function AuthenticatedLayout() {
         return;
       }
 
+      await logAuthEvent({
+        data: {
+          action: "password_changed",
+          email: refreshed.user?.email ?? null,
+          userId: refreshed.user?.id ?? null,
+        },
+      }).catch(() => undefined);
+
       toast.success("Senha alterada com sucesso!");
       setMustChange(false);
       window.location.reload();
+
     } catch (err: any) {
       toast.error(err.message || "Erro ao alterar a senha.");
     } finally {
