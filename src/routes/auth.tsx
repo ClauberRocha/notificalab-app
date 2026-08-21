@@ -141,10 +141,66 @@ function AuthPage() {
             Plataforma Estadual de Monitoramento e Decisão em Saúde
           </p>
           <h2 className="text-lg font-semibold text-foreground mt-4">
-            Entrar
+            {mode === "recovery" ? "Recuperar senha" : "Entrar"}
           </h2>
         </div>
 
+        {mode === "recovery" ? (
+          recoverySent ? (
+            <div className="space-y-4 bg-card border rounded-2xl p-6 text-sm">
+              <p className="text-foreground">
+                Se o e-mail <strong>{recoveryEmail}</strong> estiver cadastrado, enviamos um
+                link para redefinir sua senha. O link é válido por tempo limitado e pode ser
+                usado uma única vez.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Não recebeu? Verifique a caixa de spam ou tente novamente em alguns minutos.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoverySent(false);
+                  setMode("login");
+                }}
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Voltar para o login
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4 bg-card border rounded-2xl p-6">
+              <p className="text-sm text-muted-foreground">
+                Informe o e-mail cadastrado e enviaremos um link para você criar uma nova senha.
+              </p>
+              <div>
+                <label className="text-sm font-medium" htmlFor="recovery-email">E-mail</label>
+                <input
+                  id="recovery-email"
+                  required
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={(e) => setRecoveryEmail(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="voce@exemplo.com"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                {loading ? "Enviando..." : "Enviar link de redefinição"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className="w-full text-xs text-primary hover:underline"
+              >
+                Voltar para o login
+              </button>
+            </form>
+          )
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4 bg-card border rounded-2xl p-6">
           <div>
             <label className="text-sm font-medium">E-mail</label>
