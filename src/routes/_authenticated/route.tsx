@@ -100,11 +100,11 @@ function AuthenticatedLayout() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [mustChange, setMustChange] = useState<boolean>(
-    session?.user?.user_metadata?.must_change_password === true,
-  );
+  // null = ainda não confirmado pelo servidor. A tela de troca obrigatória só
+  // aparece quando o servidor confirma a marca (o token local pode estar
+  // defasado após uma redefinição de senha).
+  const [mustChange, setMustChange] = useState<boolean | null>(null);
 
-  // Confirma a marca diretamente no servidor (o token local pode estar defasado).
   useEffect(() => {
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
@@ -115,6 +115,7 @@ function AuthenticatedLayout() {
       active = false;
     };
   }, [session?.user?.id]);
+
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
