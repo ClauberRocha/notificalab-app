@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
