@@ -114,6 +114,21 @@ function AuthenticatedLayout() {
 
     setSaving(true);
     try {
+      // Impede reutilizar a senha temporária: se o login com a "nova" senha
+      // funcionar, ela é a mesma senha atual (temporária).
+      const email = session?.user?.email;
+      if (email) {
+        const { error: reuseErr } = await supabase.auth.signInWithPassword({
+          email,
+          password: newPassword,
+        });
+        if (!reuseErr) {
+          toast.error("A nova senha não pode ser igual à senha temporária. Escolha uma senha diferente.");
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
         data: { must_change_password: false }
