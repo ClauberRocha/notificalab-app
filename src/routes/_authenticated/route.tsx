@@ -13,6 +13,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
 import { logAuthEvent } from "@/lib/audit.functions";
+import { needsPasswordChange } from "@/lib/must-change-password";
 
 
 type AppRole = "admin" | "gestor" | "user";
@@ -111,7 +112,7 @@ function AuthenticatedLayout() {
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!active) return;
-      setMustChange(data.user?.user_metadata?.must_change_password === true);
+      setMustChange(needsPasswordChange(data.user));
     });
     return () => {
       active = false;
@@ -154,7 +155,7 @@ function AuthenticatedLayout() {
       if (metaErr) throw metaErr;
 
       const { data: refreshed } = await supabase.auth.getUser();
-      if (refreshed.user?.user_metadata?.must_change_password === true) {
+      if (needsPasswordChange(refreshed.user)) {
         toast.error("Senha alterada, mas a exigência de troca não pôde ser removida. Entre em contato com o suporte.");
         setSaving(false);
         return;
