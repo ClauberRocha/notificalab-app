@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -72,13 +74,19 @@ function AuthPage() {
     setAuthError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      void logAuthEvent({
+        data: { action: "login", email, userId: data.user?.id ?? null },
+      });
       navigate({ to: "/" });
     } catch (err) {
       const type = classifyAuthError(err);
       setAuthError(type);
       toast.error(errorMessages[type]);
+      void logAuthEvent({
+        data: { action: "login_failed", email, reason: `motivo: ${type}` },
+      });
     } finally {
       setLoading(false);
     }
@@ -102,8 +110,12 @@ function AuthPage() {
         return;
       }
     }
+    void logAuthEvent({
+      data: { action: "password_reset_requested", email: recoveryEmail },
+    });
     setRecoverySent(true);
   };
+
 
 
 

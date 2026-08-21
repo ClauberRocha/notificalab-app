@@ -12,6 +12,8 @@ import { Loader2, LogOut, KeyRound } from "lucide-react";
 import { OfflineBanner } from "@/components/offline-banner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 type AppRole = "admin" | "gestor" | "user";
 
@@ -76,19 +78,21 @@ export const Route = createFileRoute("/_authenticated")({
     const role = await getRoleCached(user.id);
     const path = location.pathname;
 
+    // Permissões por perfil aplicadas também na rota (não só no menu),
+    // para bloquear acesso por URL direta a telas sensíveis.
+    const blockedByRole: Record<AppRole, string[]> = {
+      admin: [],
+      gestor: ["/nova-ficha", "/fichas", "/usuarios"],
+      user: ["/painel", "/usuarios", "/logs"],
+    };
 
-    if (role === "user") {
-      if (
-        path.startsWith("/painel") ||
-        path.startsWith("/usuarios") ||
-        path.startsWith("/logs")
-      ) {
-        throw redirect({ to: "/" });
-      }
+    if (blockedByRole[role].some((prefix) => path.startsWith(prefix))) {
+      throw redirect({ to: "/" });
     }
 
     return { user, role };
   },
+
   component: AuthenticatedLayout,
 });
 
@@ -98,11 +102,11 @@ function AuthenticatedLayout() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [mustChange, setMustChange] = useState<boolean>(
-    session?.user?.user_metadata?.must_change_password === true,
-  );
+  // null = ainda não confirmado pelo servidor. A tela de troca obrigatória só
+  // aparece quando o servidor confirma a marca (o token local pode estar
+  // defasado após uma redefinição de senha).
+  const [mustChange, setMustChange] = useState<boolean | null>(null);
 
-  // Confirma a marca diretamente no servidor (o token local pode estar defasado).
   useEffect(() => {
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
@@ -113,6 +117,7 @@ function AuthenticatedLayout() {
       active = false;
     };
   }, [session?.user?.id]);
+
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,9 +160,18 @@ function AuthenticatedLayout() {
         return;
       }
 
+      await logAuthEvent({
+        data: {
+          action: "password_changed",
+          email: refreshed.user?.email ?? null,
+          userId: refreshed.user?.id ?? null,
+        },
+      }).catch(() => undefined);
+
       toast.success("Senha alterada com sucesso!");
       setMustChange(false);
       window.location.reload();
+
     } catch (err: any) {
       toast.error(err.message || "Erro ao alterar a senha.");
     } finally {

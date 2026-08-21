@@ -47,7 +47,11 @@ export const Route = createFileRoute("/_authenticated/logs")({
 
 const ACTION_LABELS: Record<string, string> = {
   login: "Login",
+  login_failed: "Tentativa de Login Falha",
   logoff: "Logoff",
+  password_reset_requested: "Redefinição Solicitada",
+  password_reset_completed: "Redefinição Concluída",
+  password_changed: "Senha Alterada",
   create: "Criação",
   update: "Edição",
   delete: "Exclusão",
@@ -58,7 +62,11 @@ const ACTION_LABELS: Record<string, string> = {
 
 const ACTION_COLORS: Record<string, string> = {
   login: "bg-green-100 text-green-700 border-green-200",
+  login_failed: "bg-red-100 text-red-700 border-red-200",
   logoff: "bg-slate-100 text-slate-600 border-slate-200",
+  password_reset_requested: "bg-amber-100 text-amber-700 border-amber-200",
+  password_reset_completed: "bg-teal-100 text-teal-700 border-teal-200",
+  password_changed: "bg-indigo-100 text-indigo-700 border-indigo-200",
   create: "bg-blue-100 text-blue-700 border-blue-200",
   update: "bg-yellow-100 text-yellow-700 border-yellow-200",
   delete: "bg-red-100 text-red-700 border-red-200",
@@ -66,6 +74,7 @@ const ACTION_COLORS: Record<string, string> = {
   block_user: "bg-orange-100 text-orange-700 border-orange-200",
   other: "bg-muted text-muted-foreground border-border",
 };
+
 
 type LogRow = {
   id: string;
