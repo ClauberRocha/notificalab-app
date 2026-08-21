@@ -80,21 +80,26 @@ function AuthPage() {
       setLoading(false);
     }
   };
-  const handleForgotPassword = async () => {
-    if (!email) {
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryEmail) {
       toast.error("Informe seu e-mail para receber o link de redefinição");
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
-      return;
+      const type = classifyAuthError(error);
+      // Não revelamos se o e-mail existe; só sinalizamos limite/rede.
+      if (type === "rate_limit" || type === "network") {
+        toast.error(errorMessages[type]);
+        return;
+      }
     }
-    toast.success("Se o e-mail estiver cadastrado, você receberá o link de redefinição.");
+    setRecoverySent(true);
   };
 
 
