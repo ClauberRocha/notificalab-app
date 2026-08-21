@@ -9,6 +9,8 @@ import {
   highestRole,
   rolesFromRows,
 } from "@/lib/rbac";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 export interface AuthUser {
   id: string;
