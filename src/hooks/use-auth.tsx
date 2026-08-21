@@ -126,8 +126,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    if (session?.user) {
+      await logAuthEvent({
+        data: {
+          action: "logoff",
+          email: session.user.email ?? null,
+          userId: session.user.id,
+        },
+      }).catch(() => undefined);
+    }
     await supabase.auth.signOut();
   };
+
 
   const value = useMemo<AuthContextValue>(
     () => ({
