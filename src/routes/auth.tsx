@@ -72,13 +72,19 @@ function AuthPage() {
     setAuthError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      void logAuthEvent({
+        data: { action: "login", email, userId: data.user?.id ?? null },
+      });
       navigate({ to: "/" });
     } catch (err) {
       const type = classifyAuthError(err);
       setAuthError(type);
       toast.error(errorMessages[type]);
+      void logAuthEvent({
+        data: { action: "login_failed", email, reason: `motivo: ${type}` },
+      });
     } finally {
       setLoading(false);
     }
@@ -102,8 +108,12 @@ function AuthPage() {
         return;
       }
     }
+    void logAuthEvent({
+      data: { action: "password_reset_requested", email: recoveryEmail },
+    });
     setRecoverySent(true);
   };
+
 
 
 
