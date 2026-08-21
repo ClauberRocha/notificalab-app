@@ -12,6 +12,8 @@ import { Loader2, LogOut, KeyRound } from "lucide-react";
 import { OfflineBanner } from "@/components/offline-banner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 type AppRole = "admin" | "gestor" | "user";
 
