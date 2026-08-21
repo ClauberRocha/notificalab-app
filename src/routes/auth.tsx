@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { logAuthEvent } from "@/lib/audit.functions";
-import { loginSuccessFeedback, needsPasswordChange } from "@/lib/must-change-password";
+import { loginSuccessFeedback } from "@/lib/must-change-password";
 
 
 
