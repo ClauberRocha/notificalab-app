@@ -57,6 +57,9 @@ function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<AuthErrorType | null>(null);
+  const [mode, setMode] = useState<"login" | "recovery">("login");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recoverySent, setRecoverySent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
