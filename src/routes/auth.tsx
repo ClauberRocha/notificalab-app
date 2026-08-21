@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { logAuthEvent } from "@/lib/audit.functions";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
