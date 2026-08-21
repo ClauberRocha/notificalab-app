@@ -288,6 +288,8 @@ function AuthPage() {
           </p>
 
         </form>
+        )}
+
 
         <footer className="mt-6 text-center text-xs text-muted-foreground/70 space-y-0.5">
           <p>Desenvolvido por GERTEC/ConsulTI</p>
