@@ -76,19 +76,21 @@ export const Route = createFileRoute("/_authenticated")({
     const role = await getRoleCached(user.id);
     const path = location.pathname;
 
+    // Permissões por perfil aplicadas também na rota (não só no menu),
+    // para bloquear acesso por URL direta a telas sensíveis.
+    const blockedByRole: Record<AppRole, string[]> = {
+      admin: [],
+      gestor: ["/nova-ficha", "/fichas", "/usuarios"],
+      user: ["/painel", "/usuarios", "/logs"],
+    };
 
-    if (role === "user") {
-      if (
-        path.startsWith("/painel") ||
-        path.startsWith("/usuarios") ||
-        path.startsWith("/logs")
-      ) {
-        throw redirect({ to: "/" });
-      }
+    if (blockedByRole[role].some((prefix) => path.startsWith(prefix))) {
+      throw redirect({ to: "/" });
     }
 
     return { user, role };
   },
+
   component: AuthenticatedLayout,
 });
 
