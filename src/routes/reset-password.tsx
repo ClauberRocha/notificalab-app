@@ -28,18 +28,57 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setReady(Boolean(data.session));
-    });
+    let active = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setReady(true);
+        setLinkError(null);
+      }
     });
-    return () => sub.subscription.unsubscribe();
+
+    const run = async () => {
+      // Link expirado/inválido: o Supabase devolve o erro no fragmento da URL.
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const hashError = hash.get("error_description") ?? hash.get("error");
+      if (hashError) {
+        setLinkError(
+          "Este link de redefinição é inválido ou já expirou. Solicite um novo link na tela de login.",
+        );
+        return;
+      }
+
+      // Fluxo PKCE: troca o code da URL por uma sessão de recuperação.
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!active) return;
+        if (error) {
+          setLinkError(
+            "Este link de redefinição é inválido ou já expirou. Solicite um novo link na tela de login.",
+          );
+          return;
+        }
+        setReady(true);
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (active) setReady(Boolean(data.session));
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,10 +92,20 @@ function ResetPasswordPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.updateUser({
+      password,
+      data: { must_change_password: false },
+    });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const msg = error.message.toLowerCase();
+      if (msg.includes("different from the old") || msg.includes("should be different")) {
+        toast.error("A nova senha deve ser diferente da senha anterior.");
+      } else if (msg.includes("weak") || msg.includes("pwned") || msg.includes("compromised")) {
+        toast.error("Escolha uma senha mais forte — esta é muito comum ou vazada.");
+      } else {
+        toast.error("Não foi possível atualizar a senha. Solicite um novo link e tente de novo.");
+      }
       return;
     }
     toast.success("Senha atualizada com sucesso");
