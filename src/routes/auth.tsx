@@ -247,7 +247,12 @@ function AuthPage() {
 
           <button
             type="button"
-            onClick={handleForgotPassword}
+            onClick={() => {
+              setRecoveryEmail(email);
+              setRecoverySent(false);
+              setAuthError(null);
+              setMode("recovery");
+            }}
             className="text-xs text-primary hover:underline"
           >
             Esqueci minha senha
