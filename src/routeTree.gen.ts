@@ -51,7 +51,6 @@ import { Route as AuthenticatedFichasDifteriaIndexRouteImport } from './routes/_
 import { Route as AuthenticatedFichasDengueIndexRouteImport } from './routes/_authenticated/fichas.dengue.index'
 import { Route as AuthenticatedFichasCoquelucheIndexRouteImport } from './routes/_authenticated/fichas.coqueluche.index'
 import { Route as AuthenticatedFichasChikungunyaIndexRouteImport } from './routes/_authenticated/fichas.chikungunya.index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedFichasTuberculoseIdRouteImport } from './routes/_authenticated/fichas.tuberculose.$id'
@@ -314,12 +313,6 @@ const AuthenticatedFichasChikungunyaIndexRoute =
     path: '/fichas/chikungunya/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   id: '/lovable/email/auth/webhook',
   path: '/lovable/email/auth/webhook',
@@ -471,7 +464,6 @@ export interface FileRoutesByFullPath {
   '/fichas/tuberculose/$id': typeof AuthenticatedFichasTuberculoseIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/fichas/chikungunya/': typeof AuthenticatedFichasChikungunyaIndexRoute
   '/fichas/coqueluche/': typeof AuthenticatedFichasCoquelucheIndexRoute
   '/fichas/dengue/': typeof AuthenticatedFichasDengueIndexRoute
@@ -533,7 +525,6 @@ export interface FileRoutesByTo {
   '/fichas/tuberculose/$id': typeof AuthenticatedFichasTuberculoseIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/fichas/chikungunya': typeof AuthenticatedFichasChikungunyaIndexRoute
   '/fichas/coqueluche': typeof AuthenticatedFichasCoquelucheIndexRoute
   '/fichas/dengue': typeof AuthenticatedFichasDengueIndexRoute
@@ -597,7 +588,6 @@ export interface FileRoutesById {
   '/_authenticated/fichas/tuberculose/$id': typeof AuthenticatedFichasTuberculoseIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/fichas/chikungunya/': typeof AuthenticatedFichasChikungunyaIndexRoute
   '/_authenticated/fichas/coqueluche/': typeof AuthenticatedFichasCoquelucheIndexRoute
   '/_authenticated/fichas/dengue/': typeof AuthenticatedFichasDengueIndexRoute
@@ -661,7 +651,6 @@ export interface FileRouteTypes {
     | '/fichas/tuberculose/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/fichas/chikungunya/'
     | '/fichas/coqueluche/'
     | '/fichas/dengue/'
@@ -723,7 +712,6 @@ export interface FileRouteTypes {
     | '/fichas/tuberculose/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/fichas/chikungunya'
     | '/fichas/coqueluche'
     | '/fichas/dengue'
@@ -786,7 +774,6 @@ export interface FileRouteTypes {
     | '/_authenticated/fichas/tuberculose/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/_authenticated/fichas/chikungunya/'
     | '/_authenticated/fichas/coqueluche/'
     | '/_authenticated/fichas/dengue/'
@@ -812,7 +799,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1111,13 +1097,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFichasChikungunyaIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/lovable/email/auth/webhook': {
       id: '/lovable/email/auth/webhook'
       path: '/lovable/email/auth/webhook'
@@ -1392,7 +1371,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

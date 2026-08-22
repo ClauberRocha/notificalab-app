@@ -6,12 +6,31 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
+import { loadEnv } from "vite";
+import path from "node:path";
+
+// Server routes (e.g. /lovable/email/*) need non-VITE_ env vars in process.env.
+const serverEnv = loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), "");
+Object.assign(process.env, serverEnv);
 
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
   vite: {
+    resolve: {
+      alias: {
+        "entities/lib/decode.js": path.resolve(
+          import.meta.dirname,
+          "node_modules/entities/lib/decode.js",
+        ),
+        "entities/lib/encode.js": path.resolve(
+          import.meta.dirname,
+          "node_modules/entities/lib/encode.js",
+        ),
+        entities: path.resolve(import.meta.dirname, "node_modules/entities"),
+      },
+    },
     plugins: [
       VitePWA({
         registerType: "autoUpdate",
