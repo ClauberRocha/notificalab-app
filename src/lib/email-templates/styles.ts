@@ -3,7 +3,7 @@
 
 export const brand = {
   primary: '#1b5fa8',
-  primaryDark: '#134madeup',
+  primaryDark: '#12294a',
 } as const
 
 export const main = {
