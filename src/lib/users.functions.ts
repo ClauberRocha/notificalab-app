@@ -513,3 +513,59 @@ export const checkEmailExists = createServerFn({ method: "POST" })
   });
 
 
+
+const TempPasswordSchema = z.object({ id: z.string().uuid() });
+
+/**
+ * Gera uma senha temporária legível e marca o usuário para troca obrigatória
+ * no próximo acesso. A senha é retornada UMA única vez para o administrador
+ * repassar ao usuário por um canal seguro (nunca fica armazenada em claro).
+ */
+export const setTemporaryPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => TempPasswordSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.id);
+    const targetTop = highest(
+      (roleRows ?? [])
+        .map((r: { role: string }) => r.role as Role)
+        .filter((r): r is Role => r === "admin" || r === "gestor" || r === "user"),
+    );
+    const { actorTop } = await ensureCanManage(
+      context.supabase,
+      context.userId,
+      targetTop,
+      data.id,
+    );
+
+    const tempPassword = generateReadablePassword();
+
+    const { data: updated, error } = await supabaseAdmin.auth.admin.updateUserById(
+      data.id,
+      {
+        password: tempPassword,
+        user_metadata: { must_change_password: true },
+      },
+    );
+    if (error) throw new Error(error.message);
+
+    await audit(
+      "temp_password",
+      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso).`,
+      { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
+      data.id,
+    );
+
+    return {
+      id: data.id,
+      email: updated.user?.email ?? null,
+      password: tempPassword,
+    };
+  });
