@@ -83,7 +83,9 @@ export const Route = createFileRoute("/_authenticated")({
     // para bloquear acesso por URL direta a telas sensíveis.
     const blockedByRole: Record<AppRole, string[]> = {
       admin: [],
-      gestor: ["/nova-ficha", "/fichas", "/usuarios"],
+      // Gestor pode consultar as fichas cadastradas (somente leitura),
+      // mas não cadastra fichas nem gerencia usuários.
+      gestor: ["/nova-ficha", "/usuarios"],
       user: ["/painel", "/usuarios", "/logs"],
     };
 
