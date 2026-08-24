@@ -21,6 +21,19 @@ function generateStrongPassword(): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+/** Senha temporária legível (fácil de ditar) e forte o bastante. */
+function generateReadablePassword(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const symbols = "!@#$%&*";
+  const bytes = new Uint8Array(14);
+  crypto.getRandomValues(bytes);
+  let core = "";
+  for (let i = 0; i < 10; i++) core += alphabet[bytes[i]! % alphabet.length];
+  const symbol = symbols[bytes[10]! % symbols.length];
+  const digits = String(((bytes[11]! << 8) | bytes[12]!) % 100).padStart(2, "0");
+  return `${core.slice(0, 5)}-${core.slice(5)}${symbol}${digits}`;
+}
+
 const UpdateUserSchema = z.object({
   id: z.string().uuid(),
   full_name: z.string().trim().min(1).max(150),
