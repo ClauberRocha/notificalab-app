@@ -569,12 +569,37 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
     );
     if (error) throw new Error(error.message);
 
+    // Avisa o usuário por e-mail (a senha nunca vai por e-mail).
+    const targetEmail = updated.user?.email ?? null;
+    if (targetEmail) {
+      try {
+        const { sendTemplateEmail } = await import(
+          "@/lib/email-templates/send-email"
+        );
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("id", data.id)
+          .maybeSingle();
+        await sendTemplateEmail("temp-password", targetEmail, {
+          templateData: {
+            fullName: profile?.full_name ?? null,
+            loginUrl: "https://consulti.slz.br/auth",
+          },
+          idempotencyKey: `temp-password-${data.id}-${Date.now()}`,
+        });
+      } catch (e) {
+        console.error("Falha ao enviar e-mail de senha temporária:", e);
+      }
+    }
+
     await audit(
       "temp_password",
       `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso).`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       data.id,
     );
+
 
     return {
       id: data.id,
