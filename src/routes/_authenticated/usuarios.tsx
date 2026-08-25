@@ -261,6 +261,15 @@ function UsuariosPage() {
     onError: (e: Error) => toast.error(`❌ ${e.message}`),
   });
 
+  const tempPasswordMutation = useMutation({
+    mutationFn: (id: string) => setTempPasswordFn({ data: { id } }),
+    onSuccess: (res) => {
+      setTempPasswordInfo({ email: res.email, password: res.password });
+    },
+    onError: (e: Error) => toast.error(`❌ ${e.message}`),
+  });
+
+
   const editMutation = useMutation({
     mutationFn: (vars: { id: string; form: FormState }) =>
       updateUserFn({
