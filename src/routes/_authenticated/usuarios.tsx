@@ -662,6 +662,59 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Senha temporária gerada */}
+      <Dialog
+        open={!!tempPasswordInfo}
+        onOpenChange={(o) => !o && setTempPasswordInfo(null)}
+      >
+        <DialogContent className="max-w-md mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle>Senha temporária gerada</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Repasse esta senha ao usuário por um canal seguro. Ela aparece
+              apenas uma vez e o sistema exigirá a troca no primeiro acesso.
+            </p>
+            {tempPasswordInfo?.email && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Usuário: </span>
+                <strong>{tempPasswordInfo.email}</strong>
+              </p>
+            )}
+            <div className="flex items-center gap-2">
+              <code className="flex-1 select-all rounded-xl border border-border/60 bg-muted/40 px-4 py-3 font-mono text-base tracking-wide">
+                {tempPasswordInfo?.password}
+              </code>
+              <Button
+                variant="outline"
+                size="icon"
+                title="Copiar senha"
+                aria-label="Copiar senha temporária"
+                onClick={async () => {
+                  if (!tempPasswordInfo) return;
+                  try {
+                    await navigator.clipboard.writeText(
+                      tempPasswordInfo.password,
+                    );
+                    toast.success("Senha copiada.");
+                  } catch {
+                    toast.error("Não foi possível copiar. Selecione e copie manualmente.");
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setTempPasswordInfo(null)}>Concluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
       {/* Delete confirmation */}
       <AlertDialog
         open={!!deleting}
