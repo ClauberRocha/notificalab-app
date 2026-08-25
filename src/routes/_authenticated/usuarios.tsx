@@ -469,6 +469,26 @@ function UsuariosPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="w-8 h-8 text-muted-foreground hover:text-primary disabled:opacity-50"
+                          onClick={() => tempPasswordMutation.mutate(u.id)}
+                          disabled={
+                            tempPasswordMutation.isPending &&
+                            tempPasswordMutation.variables === u.id
+                          }
+                          title="Gerar senha temporária"
+                          aria-label={`Gerar senha temporária para ${u.full_name || u.email}`}
+                        >
+                          {tempPasswordMutation.isPending &&
+                          tempPasswordMutation.variables === u.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <KeyRound className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className={`w-8 h-8 ${u.blocked ? "text-green-600 hover:text-green-700" : "text-yellow-600 hover:text-yellow-700"}`}
                           onClick={() => blockMutation.mutate(u)}
                           title={u.blocked ? "Desbloquear" : "Bloquear"}
