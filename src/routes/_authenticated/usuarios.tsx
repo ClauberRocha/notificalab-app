@@ -188,7 +188,13 @@ function UsuariosPage() {
   const updateUserFn = useServerFn(updateUser);
   const deleteUserFn = useServerFn(deleteUser);
   const resendInviteFn = useServerFn(resendInvite);
+  const setTempPasswordFn = useServerFn(setTemporaryPassword);
   const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
+  const [tempPasswordInfo, setTempPasswordInfo] = useState<{
+    email: string | null;
+    password: string;
+  } | null>(null);
+
   
 
   useEffect(() => {
