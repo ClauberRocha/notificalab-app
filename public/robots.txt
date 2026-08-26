@@ -3,4 +3,4 @@ Allow: /
 Disallow: /_authenticated/
 Disallow: /lovable/
 
-Sitemap: https://notifica-ma.lovable.app/sitemap.xml
+Sitemap: https://notificalab.consulti.slz.br/sitemap.xml
