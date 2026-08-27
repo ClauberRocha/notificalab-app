@@ -57,6 +57,14 @@ export async function sendTemplateEmail(
     throw new Error('Recipient is required (the template defines no fixed recipient)')
   }
 
+  // Só dispara quando os registros TXT/NS do domínio de envio estiverem
+  // publicados e visíveis na consulta DNS pública.
+  const { checkSenderDnsReady } = await import('./dns-check.server')
+  const dns = await checkSenderDnsReady()
+  if (!dns.ready) {
+    return { sent: false, reason: 'sender_dns_not_ready', missing: dns.missing }
+  }
+
   const templateData = options.templateData ?? {}
   const element = React.createElement(template.component, templateData)
   const html = await render(element)
