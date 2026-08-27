@@ -17,6 +17,7 @@ const FROM_DOMAIN = "notify.consulti.slz.br"
 export type SendTemplateEmailResult =
   | { sent: true }
   | { sent: false; reason: 'recipient_suppressed' }
+  | { sent: false; reason: 'sender_dns_not_ready'; missing: string[] }
 
 export interface SendTemplateEmailOptions {
   templateData?: Record<string, any>
