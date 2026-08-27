@@ -17,6 +17,7 @@ const FROM_DOMAIN = "notify.consulti.slz.br"
 export type SendTemplateEmailResult =
   | { sent: true }
   | { sent: false; reason: 'recipient_suppressed' }
+  | { sent: false; reason: 'sender_dns_not_ready'; missing: string[] }
 
 export interface SendTemplateEmailOptions {
   templateData?: Record<string, any>
@@ -54,6 +55,14 @@ export async function sendTemplateEmail(
   const recipient = template.to || to
   if (!recipient) {
     throw new Error('Recipient is required (the template defines no fixed recipient)')
+  }
+
+  // Só dispara quando os registros TXT/NS do domínio de envio estiverem
+  // publicados e visíveis na consulta DNS pública.
+  const { checkSenderDnsReady } = await import('./dns-check.server')
+  const dns = await checkSenderDnsReady()
+  if (!dns.ready) {
+    return { sent: false, reason: 'sender_dns_not_ready', missing: dns.missing }
   }
 
   const templateData = options.templateData ?? {}
