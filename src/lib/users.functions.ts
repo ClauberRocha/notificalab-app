@@ -195,16 +195,27 @@ export const createUser = createServerFn({ method: "POST" })
       console.error("Falha ao gerar link de definição de senha:", e);
     }
 
-    // Enfileira e-mail de boas-vindas com LINK (nunca com a senha em texto puro).
-    const messageId = crypto.randomUUID();
-    await supabaseAdmin.from("email_send_log").insert({
-      message_id: messageId,
-      template_name: "invite_set_password",
-      recipient_email: data.email,
-      status: "pending",
-    });
+    // Só enfileira o e-mail quando os registros DNS do domínio de envio
+    // estiverem publicados e visíveis na consulta pública.
+    const { checkSenderDnsReady } = await import(
+      "@/lib/email-templates/dns-check.server"
+    );
+    const dns = await checkSenderDnsReady();
+    let emailStatus: "sent" | "dns_pending" | "error" = "sent";
 
-    const htmlContent = `
+    if (!dns.ready) {
+      emailStatus = "dns_pending";
+    } else {
+      // Enfileira e-mail de boas-vindas com LINK (nunca com a senha em texto puro).
+      const messageId = crypto.randomUUID();
+      await supabaseAdmin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "invite_set_password",
+        recipient_email: data.email,
+        status: "pending",
+      });
+
+      const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
         <h2 style="color: #2563eb; margin-bottom: 20px;">Bem-vindo ao Notifica-MA Intelligence</h2>
         <p>Olá, <strong>${data.full_name}</strong>,</p>
@@ -220,7 +231,7 @@ export const createUser = createServerFn({ method: "POST" })
       </div>
     `;
 
-    const textContent = `Olá, ${data.full_name},
+      const textContent = `Olá, ${data.full_name},
 
 Sua conta foi criada no Notifica-MA Intelligence. Para definir sua senha de acesso, abra o link abaixo (válido por até 1 hora):
 
@@ -228,26 +239,29 @@ ${actionLink}
 
 Ministério da Saúde — SVSA`;
 
-    const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
-      queue_name: "auth_emails",
-      payload: {
-        run_id: crypto.randomUUID(),
-        message_id: messageId,
-        to: data.email,
-        from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
-        sender_domain: "notify.consulti.slz.br",
-        subject: "Defina sua senha de acesso — Notifica-MA Intelligence",
-        html: htmlContent,
-        text: textContent,
-        purpose: "transactional",
-        label: "invite_set_password",
-        queued_at: new Date().toISOString(),
-      },
-    });
+      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "auth_emails",
+        payload: {
+          run_id: crypto.randomUUID(),
+          message_id: messageId,
+          to: data.email,
+          from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
+          sender_domain: "notify.consulti.slz.br",
+          subject: "Defina sua senha de acesso — Notifica-MA Intelligence",
+          html: htmlContent,
+          text: textContent,
+          purpose: "transactional",
+          label: "invite_set_password",
+          queued_at: new Date().toISOString(),
+        },
+      });
 
-    if (enqueueError) {
-      console.error("Failed to enqueue invite email:", enqueueError);
+      if (enqueueError) {
+        console.error("Failed to enqueue invite email:", enqueueError);
+        emailStatus = "error";
+      }
     }
+
 
     await audit(
       "invite_user",
