@@ -61,6 +61,7 @@ import {
   deleteUser,
   resendInvite,
   setTemporaryPassword,
+  getSenderDnsStatus,
 } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
@@ -193,7 +194,14 @@ function UsuariosPage() {
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{
     email: string | null;
     password: string;
+    emailStatus: string;
   } | null>(null);
+  const dnsStatusFn = useServerFn(getSenderDnsStatus);
+  const { data: dnsStatus } = useQuery({
+    queryKey: ["sender-dns-status"],
+    queryFn: () => dnsStatusFn({}),
+    staleTime: 60_000,
+  });
 
   
 
@@ -248,7 +256,12 @@ function UsuariosPage() {
       setLastCreatedId(res.id);
       setConfirmInfo({
         title: "Usuário criado com sucesso!",
-        description: `Um e-mail foi enviado para ${res.email} com um link seguro para que o usuário defina a própria senha de acesso.\n\nO link expira em 1 hora. Caso não chegue, use "Reenviar convite".`,
+        description:
+          res.emailStatus === "sent"
+            ? `Um e-mail foi enviado para ${res.email} com um link seguro para que o usuário defina a própria senha de acesso.\n\nO link expira em 1 hora. Caso não chegue, use "Reenviar convite".`
+            : res.emailStatus === "dns_pending"
+              ? `O usuário foi criado, mas o e-mail NÃO foi enviado: o domínio de envio ainda não está verificado no DNS.\n\nGere uma senha temporária e repasse ao usuário por outro canal seguro. Depois da verificação do domínio, use "Reenviar convite".`
+              : `O usuário foi criado, mas houve uma falha no envio do e-mail. Use "Reenviar convite" ou gere uma senha temporária.`,
       });
       setConfirmOpen(true);
     },
@@ -264,7 +277,12 @@ function UsuariosPage() {
   const tempPasswordMutation = useMutation({
     mutationFn: (id: string) => setTempPasswordFn({ data: { id } }),
     onSuccess: (res) => {
-      setTempPasswordInfo({ email: res.email, password: res.password });
+      setTempPasswordInfo({
+        email: res.email,
+        password: res.password,
+        emailStatus: res.emailStatus,
+      });
+      queryClient.invalidateQueries({ queryKey: ["sender-dns-status"] });
     },
     onError: (e: Error) => toast.error(`❌ ${e.message}`),
   });
@@ -344,6 +362,26 @@ function UsuariosPage() {
           </Button>
         )}
       </div>
+
+      {dnsStatus && !dnsStatus.ready && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-medium">
+            Envio de e-mails suspenso: domínio {dnsStatus.senderDomain} ainda
+            não verificado.
+          </p>
+          <p className="mt-1">
+            Convites e avisos automáticos não serão enviados até que os
+            registros abaixo estejam publicados no DNS. Enquanto isso, use
+            “Gerar senha temporária” e repasse ao usuário por um canal seguro.
+          </p>
+          <ul className="mt-2 list-disc pl-5 font-mono text-xs">
+            {dnsStatus.missing.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -672,6 +710,13 @@ function UsuariosPage() {
             <DialogTitle>Senha temporária gerada</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {tempPasswordInfo?.emailStatus === "dns_pending" && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                Domínio de e-mail ainda não verificado — o aviso automático não
+                foi enviado. Repasse a senha por outro canal seguro (telefone
+                ou pessoalmente).
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               Repasse esta senha ao usuário por um canal seguro. Ela aparece
               apenas uma vez e o sistema exigirá a troca no primeiro acesso.

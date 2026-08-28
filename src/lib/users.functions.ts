@@ -195,16 +195,27 @@ export const createUser = createServerFn({ method: "POST" })
       console.error("Falha ao gerar link de definição de senha:", e);
     }
 
-    // Enfileira e-mail de boas-vindas com LINK (nunca com a senha em texto puro).
-    const messageId = crypto.randomUUID();
-    await supabaseAdmin.from("email_send_log").insert({
-      message_id: messageId,
-      template_name: "invite_set_password",
-      recipient_email: data.email,
-      status: "pending",
-    });
+    // Só enfileira o e-mail quando os registros DNS do domínio de envio
+    // estiverem publicados e visíveis na consulta pública.
+    const { checkSenderDnsReady } = await import(
+      "@/lib/email-templates/dns-check.server"
+    );
+    const dns = await checkSenderDnsReady();
+    let emailStatus: "sent" | "dns_pending" | "error" = "sent";
 
-    const htmlContent = `
+    if (!dns.ready) {
+      emailStatus = "dns_pending";
+    } else {
+      // Enfileira e-mail de boas-vindas com LINK (nunca com a senha em texto puro).
+      const messageId = crypto.randomUUID();
+      await supabaseAdmin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "invite_set_password",
+        recipient_email: data.email,
+        status: "pending",
+      });
+
+      const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
         <h2 style="color: #2563eb; margin-bottom: 20px;">Bem-vindo ao Notifica-MA Intelligence</h2>
         <p>Olá, <strong>${data.full_name}</strong>,</p>
@@ -220,7 +231,7 @@ export const createUser = createServerFn({ method: "POST" })
       </div>
     `;
 
-    const textContent = `Olá, ${data.full_name},
+      const textContent = `Olá, ${data.full_name},
 
 Sua conta foi criada no Notifica-MA Intelligence. Para definir sua senha de acesso, abra o link abaixo (válido por até 1 hora):
 
@@ -228,36 +239,46 @@ ${actionLink}
 
 Ministério da Saúde — SVSA`;
 
-    const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
-      queue_name: "auth_emails",
-      payload: {
-        run_id: crypto.randomUUID(),
-        message_id: messageId,
-        to: data.email,
-        from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
-        sender_domain: "notify.consulti.slz.br",
-        subject: "Defina sua senha de acesso — Notifica-MA Intelligence",
-        html: htmlContent,
-        text: textContent,
-        purpose: "transactional",
-        label: "invite_set_password",
-        queued_at: new Date().toISOString(),
-      },
-    });
+      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "auth_emails",
+        payload: {
+          run_id: crypto.randomUUID(),
+          message_id: messageId,
+          to: data.email,
+          from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
+          sender_domain: "notify.consulti.slz.br",
+          subject: "Defina sua senha de acesso — Notifica-MA Intelligence",
+          html: htmlContent,
+          text: textContent,
+          purpose: "transactional",
+          label: "invite_set_password",
+          queued_at: new Date().toISOString(),
+        },
+      });
 
-    if (enqueueError) {
-      console.error("Failed to enqueue invite email:", enqueueError);
+      if (enqueueError) {
+        console.error("Failed to enqueue invite email:", enqueueError);
+        emailStatus = "error";
+      }
     }
+
 
     await audit(
       "invite_user",
-      `Criou usuário ${data.email} com perfil ${data.role} e enviou link para definição de senha.`,
+      `Criou usuário ${data.email} com perfil ${data.role}. E-mail de definição de senha: ${emailStatus}.`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       newId,
-      { role: data.role, full_name: data.full_name },
+      { role: data.role, full_name: data.full_name, emailStatus },
     );
 
-    return { id: newId, email: data.email, full_name: data.full_name };
+    return {
+      id: newId,
+      email: data.email,
+      full_name: data.full_name,
+      emailStatus,
+      dnsMissing: dns.missing,
+    };
+
   });
 
 export const updateUser = createServerFn({ method: "POST" })
@@ -571,6 +592,14 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
 
     // Avisa o usuário por e-mail (a senha nunca vai por e-mail).
     const targetEmail = updated.user?.email ?? null;
+    let emailStatus:
+      | "sent"
+      | "dns_pending"
+      | "suppressed"
+      | "error"
+      | "no_email" = targetEmail ? "sent" : "no_email";
+    let dnsMissing: string[] = [];
+
     if (targetEmail) {
       try {
         const { sendTemplateEmail } = await import(
@@ -581,29 +610,51 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
           .select("full_name")
           .eq("id", data.id)
           .maybeSingle();
-        await sendTemplateEmail("temp-password", targetEmail, {
+        const result = await sendTemplateEmail("temp-password", targetEmail, {
           templateData: {
             fullName: profile?.full_name ?? null,
             loginUrl: "https://consulti.slz.br/auth",
           },
           idempotencyKey: `temp-password-${data.id}-${Date.now()}`,
         });
+        if (result.sent) {
+          emailStatus = "sent";
+        } else if (result.reason === "sender_dns_not_ready") {
+          emailStatus = "dns_pending";
+          dnsMissing = result.missing;
+        } else {
+          emailStatus = "suppressed";
+        }
       } catch (e) {
         console.error("Falha ao enviar e-mail de senha temporária:", e);
+        emailStatus = "error";
       }
     }
 
     await audit(
       "temp_password",
-      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso).`,
+      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso). E-mail: ${emailStatus}.`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       data.id,
+      { emailStatus },
     );
-
 
     return {
       id: data.id,
       email: updated.user?.email ?? null,
       password: tempPassword,
+      emailStatus,
+      dnsMissing,
     };
   });
+
+/** Status público (para admins autenticados) do DNS do domínio de envio. */
+export const getSenderDnsStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { checkSenderDnsReady } = await import(
+      "@/lib/email-templates/dns-check.server"
+    );
+    return await checkSenderDnsReady();
+  });
+
