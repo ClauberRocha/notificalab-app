@@ -363,6 +363,26 @@ function UsuariosPage() {
         )}
       </div>
 
+      {dnsStatus && !dnsStatus.ready && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-medium">
+            Envio de e-mails suspenso: domínio {dnsStatus.senderDomain} ainda
+            não verificado.
+          </p>
+          <p className="mt-1">
+            Convites e avisos automáticos não serão enviados até que os
+            registros abaixo estejam publicados no DNS. Enquanto isso, use
+            “Gerar senha temporária” e repasse ao usuário por um canal seguro.
+          </p>
+          <ul className="mt-2 list-disc pl-5 font-mono text-xs">
+            {dnsStatus.missing.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
