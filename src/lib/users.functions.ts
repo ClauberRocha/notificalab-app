@@ -592,6 +592,14 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
 
     // Avisa o usuário por e-mail (a senha nunca vai por e-mail).
     const targetEmail = updated.user?.email ?? null;
+    let emailStatus:
+      | "sent"
+      | "dns_pending"
+      | "suppressed"
+      | "error"
+      | "no_email" = targetEmail ? "sent" : "no_email";
+    let dnsMissing: string[] = [];
+
     if (targetEmail) {
       try {
         const { sendTemplateEmail } = await import(
@@ -602,29 +610,51 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
           .select("full_name")
           .eq("id", data.id)
           .maybeSingle();
-        await sendTemplateEmail("temp-password", targetEmail, {
+        const result = await sendTemplateEmail("temp-password", targetEmail, {
           templateData: {
             fullName: profile?.full_name ?? null,
             loginUrl: "https://consulti.slz.br/auth",
           },
           idempotencyKey: `temp-password-${data.id}-${Date.now()}`,
         });
+        if (result.sent) {
+          emailStatus = "sent";
+        } else if (result.reason === "sender_dns_not_ready") {
+          emailStatus = "dns_pending";
+          dnsMissing = result.missing;
+        } else {
+          emailStatus = "suppressed";
+        }
       } catch (e) {
         console.error("Falha ao enviar e-mail de senha temporária:", e);
+        emailStatus = "error";
       }
     }
 
     await audit(
       "temp_password",
-      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso).`,
+      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso). E-mail: ${emailStatus}.`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       data.id,
+      { emailStatus },
     );
-
 
     return {
       id: data.id,
       email: updated.user?.email ?? null,
       password: tempPassword,
+      emailStatus,
+      dnsMissing,
     };
   });
+
+/** Status público (para admins autenticados) do DNS do domínio de envio. */
+export const getSenderDnsStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { checkSenderDnsReady } = await import(
+      "@/lib/email-templates/dns-check.server"
+    );
+    return await checkSenderDnsReady();
+  });
+
