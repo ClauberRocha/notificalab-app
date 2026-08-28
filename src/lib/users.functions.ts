@@ -265,13 +265,20 @@ Ministério da Saúde — SVSA`;
 
     await audit(
       "invite_user",
-      `Criou usuário ${data.email} com perfil ${data.role} e enviou link para definição de senha.`,
+      `Criou usuário ${data.email} com perfil ${data.role}. E-mail de definição de senha: ${emailStatus}.`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       newId,
-      { role: data.role, full_name: data.full_name },
+      { role: data.role, full_name: data.full_name, emailStatus },
     );
 
-    return { id: newId, email: data.email, full_name: data.full_name };
+    return {
+      id: newId,
+      email: data.email,
+      full_name: data.full_name,
+      emailStatus,
+      dnsMissing: dns.missing,
+    };
+
   });
 
 export const updateUser = createServerFn({ method: "POST" })
