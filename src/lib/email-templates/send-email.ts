@@ -60,8 +60,16 @@ export async function sendTemplateEmail(
   // Só dispara quando os registros TXT/NS do domínio de envio estiverem
   // publicados e visíveis na consulta DNS pública.
   const { checkSenderDnsReady } = await import('./dns-check.server')
+  const { logEmailAttempt } = await import('@/lib/email-audit.server')
   const dns = await checkSenderDnsReady()
   if (!dns.ready) {
+    await logEmailAttempt({
+      result: 'bloqueado_dns',
+      template: templateName,
+      recipient,
+      dnsMissing: dns.missing,
+      dnsCheckedAt: dns.checkedAt,
+    })
     return { sent: false, reason: 'sender_dns_not_ready', missing: dns.missing }
   }
 
@@ -92,10 +100,30 @@ export async function sendTemplateEmail(
     )
   } catch (error) {
     if (error instanceof EmailAPIError && error.code === 'recipient_suppressed') {
+      await logEmailAttempt({
+        result: 'suprimido',
+        template: templateName,
+        recipient,
+        dnsCheckedAt: dns.checkedAt,
+      })
       return { sent: false, reason: 'recipient_suppressed' }
     }
+    await logEmailAttempt({
+      result: 'erro',
+      template: templateName,
+      recipient,
+      dnsCheckedAt: dns.checkedAt,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    })
     throw error
   }
+
+  await logEmailAttempt({
+    result: 'enviado',
+    template: templateName,
+    recipient,
+    dnsCheckedAt: dns.checkedAt,
+  })
 
   return { sent: true }
 }
