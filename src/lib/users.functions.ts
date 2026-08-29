@@ -579,82 +579,132 @@ export const setTemporaryPassword = createServerFn({ method: "POST" })
       data.id,
     );
 
-    const tempPassword = generateReadablePassword();
+    const actor = {
+      id: context.userId,
+      email: context.claims?.email ?? null,
+      role: actorTop,
+    };
 
-    const { data: updated, error } = await supabaseAdmin.auth.admin.updateUserById(
-      data.id,
-      {
-        password: tempPassword,
-        user_metadata: { must_change_password: true },
-      },
+    const { issueTemporaryPassword } = await import(
+      "@/lib/temp-password.server"
     );
-    if (error) throw new Error(error.message);
-
-    // Avisa o usuário por e-mail (a senha nunca vai por e-mail).
-    const targetEmail = updated.user?.email ?? null;
-    let emailStatus:
-      | "sent"
-      | "dns_pending"
-      | "suppressed"
-      | "error"
-      | "no_email" = targetEmail ? "sent" : "no_email";
-    let dnsMissing: string[] = [];
-
-    if (targetEmail) {
-      try {
-        const { sendTemplateEmail } = await import(
-          "@/lib/email-templates/send-email"
-        );
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("full_name")
-          .eq("id", data.id)
-          .maybeSingle();
-        const result = await sendTemplateEmail("temp-password", targetEmail, {
-          templateData: {
-            fullName: profile?.full_name ?? null,
-            loginUrl: "https://consulti.slz.br/auth",
-          },
-          idempotencyKey: `temp-password-${data.id}-${Date.now()}`,
-        });
-        if (result.sent) {
-          emailStatus = "sent";
-        } else if (result.reason === "sender_dns_not_ready") {
-          emailStatus = "dns_pending";
-          dnsMissing = result.missing;
-        } else {
-          emailStatus = "suppressed";
-        }
-      } catch (e) {
-        console.error("Falha ao enviar e-mail de senha temporária:", e);
-        emailStatus = "error";
-      }
-    }
+    const result = await issueTemporaryPassword(data.id, actor);
 
     await audit(
       "temp_password",
-      `Gerou senha temporária para ${updated.user?.email ?? data.id} (troca obrigatória no próximo acesso). E-mail: ${emailStatus}.`,
-      { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
+      `Gerou senha temporária para ${result.email ?? data.id} (troca obrigatória no próximo acesso). E-mail: ${result.emailStatus}.${
+        result.dnsMissing.length > 0
+          ? ` Registros DNS faltando: ${result.dnsMissing.join(", ")}.`
+          : ""
+      }`,
+      actor,
       data.id,
-      { emailStatus },
+      { emailStatus: result.emailStatus, dnsMissing: result.dnsMissing },
     );
 
-    return {
-      id: data.id,
-      email: updated.user?.email ?? null,
-      password: tempPassword,
-      emailStatus,
-      dnsMissing,
-    };
+    return result;
   });
 
-/** Status público (para admins autenticados) do DNS do domínio de envio. */
-export const getSenderDnsStatus = createServerFn({ method: "GET" })
+/**
+ * Reenvia (regerando) a senha temporária. O e-mail só é tentado quando o DNS
+ * público do domínio de envio estiver pronto; o motivo do bloqueio é
+ * registrado nos logs do sistema.
+ */
+export const resendTemporaryPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .inputValidator((data: unknown) => TempPasswordSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.id);
+    const targetTop = highest(
+      (roleRows ?? [])
+        .map((r: { role: string }) => r.role as Role)
+        .filter((r): r is Role => r === "admin" || r === "gestor" || r === "user"),
+    );
+    const { actorTop } = await ensureCanManage(
+      context.supabase,
+      context.userId,
+      targetTop,
+      data.id,
+    );
+
+    const actor = {
+      id: context.userId,
+      email: context.claims?.email ?? null,
+      role: actorTop,
+    };
+
     const { checkSenderDnsReady } = await import(
       "@/lib/email-templates/dns-check.server"
     );
-    return await checkSenderDnsReady();
+    const dns = await checkSenderDnsReady({ force: true });
+
+    if (!dns.ready) {
+      const { logEmailAttempt } = await import("@/lib/email-audit.server");
+      await logEmailAttempt({
+        result: "bloqueado_dns",
+        template: "temp-password",
+        recipient: "(não enviado)",
+        dnsMissing: dns.missing,
+        dnsCheckedAt: dns.checkedAt,
+        actor,
+        entityId: data.id,
+      });
+      await audit(
+        "temp_password_resend_blocked",
+        `Reenvio de senha temporária bloqueado: DNS do domínio ${dns.senderDomain} não propagado. Faltando: ${dns.missing.join(", ")}.`,
+        actor,
+        data.id,
+        { dnsMissing: dns.missing, dnsCheckedAt: dns.checkedAt },
+      );
+      return {
+        id: data.id,
+        email: null,
+        password: null,
+        emailStatus: "dns_pending" as const,
+        dnsMissing: dns.missing,
+      };
+    }
+
+    const { issueTemporaryPassword } = await import(
+      "@/lib/temp-password.server"
+    );
+    const result = await issueTemporaryPassword(data.id, actor);
+
+    await audit(
+      "temp_password_resend",
+      `Reenviou senha temporária para ${result.email ?? data.id}. E-mail: ${result.emailStatus}.`,
+      actor,
+      data.id,
+      { emailStatus: result.emailStatus },
+    );
+
+    return {
+      id: result.id,
+      email: result.email,
+      password: result.password as string | null,
+      emailStatus: result.emailStatus,
+      dnsMissing: result.dnsMissing,
+    };
   });
+
+const DnsStatusSchema = z.object({ force: z.boolean().optional() });
+
+/** Status público (para admins autenticados) do DNS do domínio de envio. */
+export const getSenderDnsStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => DnsStatusSchema.parse(data ?? {}))
+  .handler(async ({ data }) => {
+    const { checkSenderDnsReady } = await import(
+      "@/lib/email-templates/dns-check.server"
+    );
+    return await checkSenderDnsReady({ force: data.force ?? false });
+  });
+
 
