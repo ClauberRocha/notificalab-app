@@ -15,6 +15,7 @@ import {
   FileText,
   Bot,
   Settings,
+  MailCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -67,6 +68,7 @@ const groups: SidebarGroup[] = [
     items: [
       { title: "Usuários", url: "/usuarios", icon: Users, permission: "users.view" },
       { title: "Logs do Sistema", url: "/logs", icon: ClipboardList, permission: "logs.view" },
+      { title: "Diagnóstico de E-mail", url: "/diagnostico-email", icon: MailCheck, permission: "system.settings" },
     ],
   },
   {
