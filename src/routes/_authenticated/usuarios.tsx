@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -52,6 +52,7 @@ import {
   Mail,
   KeyRound,
   Copy,
+  SendHorizonal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -61,6 +62,7 @@ import {
   deleteUser,
   resendInvite,
   setTemporaryPassword,
+  resendTemporaryPassword,
   getSenderDnsStatus,
 } from "@/lib/users.functions";
 
@@ -190,6 +192,7 @@ function UsuariosPage() {
   const deleteUserFn = useServerFn(deleteUser);
   const resendInviteFn = useServerFn(resendInvite);
   const setTempPasswordFn = useServerFn(setTemporaryPassword);
+  const resendTempPasswordFn = useServerFn(resendTemporaryPassword);
   const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{
     email: string | null;
@@ -199,7 +202,7 @@ function UsuariosPage() {
   const dnsStatusFn = useServerFn(getSenderDnsStatus);
   const { data: dnsStatus } = useQuery({
     queryKey: ["sender-dns-status"],
-    queryFn: () => dnsStatusFn({}),
+    queryFn: () => dnsStatusFn({ data: {} }),
     staleTime: 60_000,
   });
 
@@ -283,6 +286,37 @@ function UsuariosPage() {
         emailStatus: res.emailStatus,
       });
       queryClient.invalidateQueries({ queryKey: ["sender-dns-status"] });
+    },
+    onError: (e: Error) => toast.error(`❌ ${e.message}`),
+  });
+
+  const resendTempPasswordMutation = useMutation({
+    mutationFn: (id: string) => resendTempPasswordFn({ data: { id } }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["sender-dns-status"] });
+      if (res.emailStatus === "sent" && res.password) {
+        setTempPasswordInfo({
+          email: res.email,
+          password: res.password,
+          emailStatus: res.emailStatus,
+        });
+        toast.success(`✉️ Nova senha temporária enviada para ${res.email}.`);
+        return;
+      }
+      if (res.emailStatus === "dns_pending") {
+        toast.error(
+          `Envio bloqueado: DNS do domínio de envio não propagado. Faltando: ${res.dnsMissing.join(", ")}.`,
+        );
+        return;
+      }
+      if (res.password) {
+        setTempPasswordInfo({
+          email: res.email,
+          password: res.password,
+          emailStatus: res.emailStatus,
+        });
+      }
+      toast.error("Não foi possível enviar o e-mail. Repasse a senha manualmente.");
     },
     onError: (e: Error) => toast.error(`❌ ${e.message}`),
   });
@@ -582,6 +616,25 @@ function UsuariosPage() {
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
                             <KeyRound className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 text-muted-foreground hover:text-primary disabled:opacity-50"
+                          onClick={() => resendTempPasswordMutation.mutate(u.id)}
+                          disabled={
+                            resendTempPasswordMutation.isPending &&
+                            resendTempPasswordMutation.variables === u.id
+                          }
+                          title="Reenviar e-mail da senha temporária"
+                          aria-label={`Reenviar e-mail da senha temporária para ${u.full_name || u.email}`}
+                        >
+                          {resendTempPasswordMutation.isPending &&
+                          resendTempPasswordMutation.variables === u.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <SendHorizonal className="w-3.5 h-3.5" />
                           )}
                         </Button>
 
