@@ -364,21 +364,82 @@ function UsuariosPage() {
       </div>
 
       {dnsStatus && !dnsStatus.ready && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 space-y-3">
           <p className="font-medium">
             Envio de e-mails suspenso: domínio {dnsStatus.senderDomain} ainda
             não verificado.
           </p>
-          <p className="mt-1">
+          <p>
             Convites e avisos automáticos não serão enviados até que os
             registros abaixo estejam publicados no DNS. Enquanto isso, use
             “Gerar senha temporária” e repasse ao usuário por um canal seguro.
           </p>
-          <ul className="mt-2 list-disc pl-5 font-mono text-xs">
-            {dnsStatus.missing.map((m) => (
-              <li key={m}>{m}</li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto rounded-lg border border-amber-300 bg-white/70">
+            <table className="w-full text-xs">
+              <thead className="bg-amber-100/70 uppercase">
+                <tr>
+                  <th className="px-3 py-2 text-left">Tipo</th>
+                  <th className="px-3 py-2 text-left">Nome (curto)</th>
+                  <th className="px-3 py-2 text-left">Valor</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dnsStatus.records ?? []).map((r) => (
+                  <tr
+                    key={`${r.type}-${r.expected}`}
+                    className="border-t border-amber-200"
+                  >
+                    <td className="px-3 py-2 font-mono">{r.type}</td>
+                    <td className="px-3 py-2 font-mono">{r.shortName}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-start gap-1">
+                        <span className="font-mono break-all">
+                          {r.expected}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-6 h-6 shrink-0"
+                          aria-label="Copiar valor"
+                          onClick={() =>
+                            navigator.clipboard
+                              .writeText(r.expected)
+                              .then(() => toast.success("Valor copiado."))
+                              .catch(() =>
+                                toast.error("Não foi possível copiar."),
+                              )
+                          }
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      {r.found ? "Encontrado" : "Faltando"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs">
+            No Registro.br use <strong>DNS → Configurar zona DNS → Modo
+            avançado</strong> (nunca a tela “Alterar servidores DNS”). Informe
+            apenas o nome curto; o valor de NS pode exigir o ponto final, ex.:{" "}
+            <span className="font-mono">ns5.lovable.cloud.</span>
+          </p>
+          <p className="text-xs">
+            Verificado em:{" "}
+            {dnsStatus.checkedAt
+              ? new Date(dnsStatus.checkedAt).toLocaleString("pt-BR")
+              : "—"}{" "}
+            — veja mais em{" "}
+            <Link to="/diagnostico-email" className="underline font-medium">
+              Diagnóstico de E-mail
+            </Link>
+            .
+          </p>
         </div>
       )}
 
