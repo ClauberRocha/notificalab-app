@@ -46,23 +46,24 @@ export function AgravoListPage({
   const { can } = useAuth();
   const canCreate = can("fichas.create");
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data, error } = await supabase
-        .from("dengue_chikungunya_cases")
-        .select("id, numero_ficha, nome_paciente, data_notificacao, status, classificacao, created_at")
-        .eq("agravo", agravo)
-        .order("created_at", { ascending: false });
-      if (!active) return;
-      if (error) setError(error.message);
-      else setRows((data ?? []) as CaseRow[]);
-      setLoading(false);
-    })();
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("dengue_chikungunya_cases")
+      .select("id, numero_ficha, nome_paciente, data_notificacao, status, classificacao, created_at")
+      .eq("agravo", agravo)
+      .order("created_at", { ascending: false });
+    if (error) setError(error.message);
+    else {
+      setError(null);
+      setRows((data ?? []) as CaseRow[]);
+    }
+    setLoading(false);
   }, [agravo]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
