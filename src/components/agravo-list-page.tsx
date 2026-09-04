@@ -75,11 +75,14 @@ export function AgravoListPage({
           <h1 className="text-2xl font-bold mt-2">{title}</h1>
         </div>
         {canCreate && (
-          <Button asChild>
-            <Link to={novaFichaPath}>
-              <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild>
+              <Link to={novaFichaPath}>
+                <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
+              </Link>
+            </Button>
+            <DengueChikImporter agravo={agravo} onImported={() => void load()} />
+          </div>
         )}
       </div>
 
