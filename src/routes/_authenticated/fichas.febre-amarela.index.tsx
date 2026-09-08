@@ -48,6 +48,7 @@ function FichasFebreAmarelaPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   useEffect(() => {
     let active = true;
@@ -81,7 +82,7 @@ function FichasFebreAmarelaPage() {
               <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
             </Link>
           </Button>
-          {canCreate && <CaseImporter agravo="febre-amarela" onImported={() => setReloadKey((k) => k + 1)} />}
+          {canImport && <CaseImporter agravo="febre-amarela" onImported={() => setReloadKey((k) => k + 1)} />}
         </div>
       </div>
 

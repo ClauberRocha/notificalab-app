@@ -45,6 +45,7 @@ export function AgravoListPage({
   const [error, setError] = useState<string | null>(null);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   const load = useCallback(async () => {
     setLoading(true);

@@ -50,6 +50,7 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
   const [reloadKey, setReloadKey] = useState(0);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   useEffect(() => {
     let active = true;
