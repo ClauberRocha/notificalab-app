@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
+import { CaseImporter } from "@/components/case-importer";
 
 type ExantemaAgravo = "sarampo" | "rubeola";
 
@@ -46,6 +47,7 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
   const [rows, setRows] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
 
@@ -65,7 +67,7 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
     return () => {
       active = false;
     };
-  }, [agravo]);
+  }, [agravo, reloadKey]);
 
   const { title, novaPath } = TITLE_MAP[agravo];
 
@@ -79,11 +81,14 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
           <h1 className="text-2xl font-bold mt-2">Fichas — {title}</h1>
         </div>
         {canCreate && (
-          <Button asChild>
-            <Link to={novaPath}>
-              <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild>
+              <Link to={novaPath}>
+                <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
+              </Link>
+            </Button>
+            <CaseImporter agravo={agravo} onImported={() => setReloadKey((k) => k + 1)} />
+          </div>
         )}
       </div>
 

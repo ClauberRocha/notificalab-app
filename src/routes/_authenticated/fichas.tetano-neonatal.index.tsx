@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { CaseImporter } from "@/components/case-importer";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/fichas/tetano-neonatal/")({
   head: () => ({ meta: [{ title: "Fichas — Tétano Neonatal" }] }),
@@ -51,6 +53,9 @@ function FichasTetanoNeonatalPage() {
   const [rows, setRows] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const { can } = useAuth();
+  const canCreate = can("fichas.create");
 
   useEffect(() => {
     let active = true;
@@ -67,7 +72,7 @@ function FichasTetanoNeonatalPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -78,11 +83,14 @@ function FichasTetanoNeonatalPage() {
           </Link>
           <h1 className="text-2xl font-bold mt-2">Fichas — Tétano Neonatal</h1>
         </div>
-        <Button asChild>
-          <Link to="/nova-ficha/tetano-neonatal">
-            <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild>
+            <Link to="/nova-ficha/tetano-neonatal">
+              <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
+            </Link>
+          </Button>
+          {canCreate && <CaseImporter agravo="tetano-neonatal" onImported={() => setReloadKey((k) => k + 1)} />}
+        </div>
       </div>
 
       <div className="bg-card border rounded-2xl overflow-hidden">
