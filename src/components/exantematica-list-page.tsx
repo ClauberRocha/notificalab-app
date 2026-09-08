@@ -50,6 +50,7 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
   const [reloadKey, setReloadKey] = useState(0);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   useEffect(() => {
     let active = true;
@@ -80,14 +81,16 @@ export function ExantematicaListPage({ agravo }: { agravo: ExantemaAgravo }) {
           </Link>
           <h1 className="text-2xl font-bold mt-2">Fichas — {title}</h1>
         </div>
-        {canCreate && (
+        {(canCreate || canImport) && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button asChild>
-              <Link to={novaPath}>
-                <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
-              </Link>
-            </Button>
-            <CaseImporter agravo={agravo} onImported={() => setReloadKey((k) => k + 1)} />
+            {canCreate && (
+              <Button asChild>
+                <Link to={novaPath}>
+                  <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
+                </Link>
+              </Button>
+            )}
+            {canImport && <CaseImporter agravo={agravo} onImported={() => setReloadKey((k) => k + 1)} />}
           </div>
         )}
       </div>

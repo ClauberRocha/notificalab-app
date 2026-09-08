@@ -58,6 +58,7 @@ function FichasTuberculosePage() {
   const [reloadKey, setReloadKey] = useState(0);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   useEffect(() => {
     let active = true;
@@ -91,7 +92,7 @@ function FichasTuberculosePage() {
               <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
             </Link>
           </Button>
-          {canCreate && <CaseImporter agravo="tuberculose" onImported={() => setReloadKey((k) => k + 1)} />}
+          {canImport && <CaseImporter agravo="tuberculose" onImported={() => setReloadKey((k) => k + 1)} />}
         </div>
       </div>
 

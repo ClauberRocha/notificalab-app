@@ -45,6 +45,7 @@ export function AgravoListPage({
   const [error, setError] = useState<string | null>(null);
   const { can } = useAuth();
   const canCreate = can("fichas.create");
+  const canImport = canCreate || can("fichas.edit");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,14 +75,16 @@ export function AgravoListPage({
           </Link>
           <h1 className="text-2xl font-bold mt-2">{title}</h1>
         </div>
-        {canCreate && (
+        {(canCreate || canImport) && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button asChild>
-              <Link to={novaFichaPath}>
-                <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
-              </Link>
-            </Button>
-            <DengueChikImporter agravo={agravo} onImported={() => void load()} />
+            {canCreate && (
+              <Button asChild>
+                <Link to={novaFichaPath}>
+                  <FilePlus className="w-4 h-4 mr-1" /> Nova ficha
+                </Link>
+              </Button>
+            )}
+            {canImport && <DengueChikImporter agravo={agravo} onImported={() => void load()} />}
           </div>
         )}
       </div>
