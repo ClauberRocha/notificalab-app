@@ -68,7 +68,14 @@ export const IMPORT_CONFIGS: Record<string, ImportConfig> = {
     fields: fieldsForAgravo("chikungunya"),
     extra: { agravo: "chikungunya" },
   },
-  meningite: generic("meningite_cases", "Meningite", meningite),
+  meningite: {
+    ...generic("meningite_cases", "Meningite", meningite),
+    extra: { agravo: "outras_meningites" },
+  },
+  outras_meningites: {
+    ...generic("meningite_cases", "Outras Meningites", meningite),
+    extra: { agravo: "outras_meningites" },
+  },
   sarampo: {
     ...generic("exantematica_cases", "Sarampo", exantematica),
     extra: { agravo: "sarampo" },

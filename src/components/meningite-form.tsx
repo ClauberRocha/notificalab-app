@@ -19,6 +19,7 @@ import {
 import { renderSmartField } from "@/components/smart-fields";
 import { AntecedentesEpidemiologicosPanel } from "@/components/antecedentes-epi";
 import { DadosClinicosPanel } from "@/components/dados-clinicos";
+import { CaseImporter } from "@/components/case-importer";
 import {
   SIM_NAO_IGN,
   SEXO,
@@ -299,15 +300,18 @@ export function MeningiteForm({ agravo }: { agravo: MeningiteAgravo }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Link to="/nova-ficha" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Voltar
-        </Link>
-        <h1 className="text-2xl font-bold mt-2">Nova ficha — {LABEL_MAP[agravo]}</h1>
-        <p className="text-sm text-muted-foreground">Notificação individual de meningite</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Caminho: <span className="font-mono">{NOVA_PATH[agravo]}</span>
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <Link to="/nova-ficha" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </Link>
+          <h1 className="text-2xl font-bold mt-2">Nova ficha — {LABEL_MAP[agravo]}</h1>
+          <p className="text-sm text-muted-foreground">Notificação individual de meningite</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Caminho: <span className="font-mono">{NOVA_PATH[agravo]}</span>
+          </p>
+        </div>
+        <CaseImporter agravo="outras_meningites" />
       </div>
 
       <div className="mb-6">
