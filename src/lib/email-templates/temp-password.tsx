@@ -31,7 +31,7 @@ interface Props {
 }
 
 const Email = ({ fullName, loginUrl, tempPassword, isNewUser }: Props) => {
-  const url = loginUrl || 'https://notificalab.consulti.slz.br/auth'
+  const url = loginUrl || 'https://notifica.consulti.slz.br/auth'
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
@@ -117,7 +117,7 @@ export const template = {
   displayName: 'Senha temporária / Boas-vindas',
   previewData: {
     fullName: 'Maria Silva',
-    loginUrl: 'https://notificalab.consulti.slz.br/auth',
+    loginUrl: 'https://notifica.consulti.slz.br/auth',
     tempPassword: 'AbCdE-fGhJk!42',
     isNewUser: true,
   },

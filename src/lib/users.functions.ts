@@ -196,7 +196,7 @@ export const createUser = createServerFn({ method: "POST" })
       const result = await sendTemplateEmail("temp-password", data.email, {
         templateData: {
           fullName: data.full_name,
-          loginUrl: "https://notificalab.consulti.slz.br/auth",
+          loginUrl: "https://notifica.consulti.slz.br/auth",
           tempPassword,
           isNewUser: true,
         },

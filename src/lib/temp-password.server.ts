@@ -67,7 +67,7 @@ export async function issueTemporaryPassword(
       const result = await sendTemplateEmail("temp-password", targetEmail, {
         templateData: {
           fullName: profile?.full_name ?? null,
-          loginUrl: "https://notificalab.consulti.slz.br/auth",
+          loginUrl: "https://notifica.consulti.slz.br/auth",
           tempPassword,
         },
         idempotencyKey: `temp-password-${userId}-${Date.now()}`,
