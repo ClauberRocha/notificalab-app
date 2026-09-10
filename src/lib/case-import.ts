@@ -315,3 +315,57 @@ export function buildRows(
 
   return out;
 }
+
+/** Idade a partir da data de nascimento (anos completos). */
+export function idadeFromNascimento(iso: string): number | null {
+  const dob = new Date(iso);
+  if (isNaN(dob.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const m = now.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+  return age >= 0 ? age : null;
+}
+
+/** Faixa etária a partir da idade em anos. */
+export function faixaEtariaFromIdade(idade: number): string {
+  if (idade < 1) return "< 1 ano";
+  if (idade <= 10) return "1 a 10 anos";
+  if (idade <= 20) return "11 a 20 anos";
+  if (idade <= 30) return "21 a 30 anos";
+  if (idade <= 40) return "31 a 40 anos";
+  if (idade <= 50) return "41 a 50 anos";
+  if (idade <= 60) return "51 a 60 anos";
+  if (idade <= 70) return "61 a 70 anos";
+  return "Acima de 70 anos";
+}
+
+/**
+ * Preenche campos derivados quando ausentes na planilha:
+ * idade/faixa etária pela data de nascimento e regional/macrorregião pelo
+ * município de residência.
+ */
+function deriveComputedFields(
+  payload: Record<string, unknown>,
+  byName: Map<string, ImportField>,
+): void {
+  const has = (n: string) => byName.has(n);
+  const empty = (n: string) => payload[n] === undefined || payload[n] === null || payload[n] === "";
+
+  const nascimento = payload["data_nascimento"];
+  if (has("idade") && empty("idade") && typeof nascimento === "string") {
+    const idade = idadeFromNascimento(nascimento);
+    if (idade !== null) payload["idade"] = idade;
+  }
+  const idadeVal = payload["idade"];
+  if (has("faixa_etaria") && empty("faixa_etaria") && typeof idadeVal === "number") {
+    payload["faixa_etaria"] = faixaEtariaFromIdade(idadeVal);
+  }
+
+  const municipio = payload["municipio_residencia"];
+  if (typeof municipio === "string" && municipio.trim() !== "") {
+    const { regional, macroregiao } = getRegionalAndMacro(municipio);
+    if (has("regional") && empty("regional") && regional) payload["regional"] = regional;
+    if (has("macroregiao") && empty("macroregiao") && macroregiao) payload["macroregiao"] = macroregiao;
+  }
+}
