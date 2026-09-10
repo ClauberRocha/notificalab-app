@@ -26,9 +26,10 @@ import {
 interface Props {
   fullName?: string
   loginUrl?: string
+  tempPassword?: string
 }
 
-const Email = ({ fullName, loginUrl }: Props) => {
+const Email = ({ fullName, loginUrl, tempPassword }: Props) => {
   const url = loginUrl || 'https://consulti.slz.br/auth'
   return (
     <Html lang="pt-BR" dir="ltr">
@@ -47,12 +48,39 @@ const Email = ({ fullName, loginUrl }: Props) => {
             Um administrador gerou uma <strong>senha temporária</strong> para a sua
             conta na Plataforma Estadual de Monitoramento e Decisão em Saúde.
           </Text>
-          <Text style={text}>
-            Por segurança, a senha temporária é entregue diretamente pelo
-            administrador responsável — ela nunca é enviada por e-mail. No
-            primeiro acesso, o sistema exigirá que você defina uma nova senha
-            pessoal antes de continuar.
-          </Text>
+          {tempPassword ? (
+            <>
+              <Text style={text}>
+                Sua senha temporária de acesso é:
+              </Text>
+              <Section style={{
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                textAlign: 'center',
+                margin: '16px 0',
+              }}>
+                <Text style={{
+                  fontFamily: 'monospace',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  letterSpacing: '1px',
+                  color: '#0f172a',
+                  margin: 0,
+                }}>
+                  {tempPassword}
+                </Text>
+              </Section>
+              <Text style={text}>
+                No primeiro acesso, você deverá utilizar esta senha temporária e o sistema exigirá que você defina uma nova senha pessoal antes de continuar.
+              </Text>
+            </>
+          ) : (
+            <Text style={text}>
+              No primeiro acesso, o sistema exigirá que você defina uma nova senha pessoal antes de continuar.
+            </Text>
+          )}
           <Button href={url} style={button}>
             Acessar a plataforma
           </Button>
@@ -78,5 +106,6 @@ export const template = {
   previewData: {
     fullName: 'Maria Silva',
     loginUrl: 'https://consulti.slz.br/auth',
+    tempPassword: 'AbCdE-fGhJk!42',
   },
 } satisfies TemplateEntry

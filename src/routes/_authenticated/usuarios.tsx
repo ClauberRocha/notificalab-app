@@ -261,10 +261,10 @@ function UsuariosPage() {
         title: "Usuário criado com sucesso!",
         description:
           res.emailStatus === "sent"
-            ? `Um e-mail foi enviado para ${res.email} com um link seguro para que o usuário defina a própria senha de acesso.\n\nO link expira em 1 hora. Caso não chegue, use "Reenviar convite".`
+            ? `Um e-mail foi enviado para ${res.email} contendo a senha temporária e as instruções para o primeiro acesso.`
             : res.emailStatus === "dns_pending"
-              ? `O usuário foi criado, mas o e-mail NÃO foi enviado: o domínio de envio ainda não está verificado no DNS.\n\nGere uma senha temporária e repasse ao usuário por outro canal seguro. Depois da verificação do domínio, use "Reenviar convite".`
-              : `O usuário foi criado, mas houve uma falha no envio do e-mail. Use "Reenviar convite" ou gere uma senha temporária.`,
+              ? `O usuário foi criado, mas o e-mail NÃO foi enviado: o domínio de envio ainda não está verificado no DNS.\n\nRepasse a senha temporária gerada ao usuário por outro canal seguro.`
+              : `O usuário foi criado, mas houve uma falha no envio do e-mail. Use "Reenviar convite" ou repasse a senha temporária gerada.`,
       });
       setConfirmOpen(true);
     },
@@ -1030,8 +1030,7 @@ function UserFormFields({
       </div>
 
       <p className="text-xs text-muted-foreground bg-muted/40 border border-border/60 rounded-md p-3">
-        Ao salvar, o usuário receberá um e-mail com um link seguro para definir
-        a própria senha. Nenhuma senha é trafegada por e-mail.
+        Ao salvar, o usuário receberá um e-mail com a senha temporária e o link para o primeiro acesso.
       </p>
 
 

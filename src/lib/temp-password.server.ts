@@ -68,6 +68,7 @@ export async function issueTemporaryPassword(
         templateData: {
           fullName: profile?.full_name ?? null,
           loginUrl: "https://notificalab.consulti.slz.br/auth",
+          tempPassword,
         },
         idempotencyKey: `temp-password-${userId}-${Date.now()}`,
       });

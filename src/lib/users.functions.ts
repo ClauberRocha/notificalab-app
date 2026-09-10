@@ -141,9 +141,8 @@ export const createUser = createServerFn({ method: "POST" })
       "@/integrations/supabase/client.server"
     );
 
-    // Senha aleatória forte gerada server-side e descartada — o usuário
-    // definirá a própria senha pelo link de convite enviado por e-mail.
-    const tempPassword = generateStrongPassword();
+    // Senha temporária legível enviada no e-mail de criação de usuário.
+    const tempPassword = generateReadablePassword();
 
     const { data: created, error: cErr } =
       await supabaseAdmin.auth.admin.createUser({
@@ -206,7 +205,7 @@ export const createUser = createServerFn({ method: "POST" })
     if (!dns.ready) {
       emailStatus = "dns_pending";
     } else {
-      // Enfileira e-mail de boas-vindas com LINK (nunca com a senha em texto puro).
+      // Enfileira e-mail de boas-vindas com a senha temporária e o link de acesso.
       const messageId = crypto.randomUUID();
       await supabaseAdmin.from("email_send_log").insert({
         message_id: messageId,
@@ -219,9 +218,14 @@ export const createUser = createServerFn({ method: "POST" })
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
         <h2 style="color: #2563eb; margin-bottom: 20px;">Bem-vindo ao Notifica-MA Intelligence</h2>
         <p>Olá, <strong>${data.full_name}</strong>,</p>
-        <p>Sua conta foi criada na Plataforma Estadual de Monitoramento e Decisão em Saúde. Para começar, defina sua senha de acesso clicando no botão abaixo. O link é pessoal e expira em até 1 hora.</p>
+        <p>Sua conta foi criada na Plataforma Estadual de Monitoramento e Decisão em Saúde.</p>
+        <p>Sua <strong>senha temporária de acesso</strong> é:</p>
+        <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px; color: #0f172a; text-align: center; margin: 20px 0;">
+          ${tempPassword}
+        </div>
+        <p>Para começar, acesse a plataforma e utilize sua senha temporária (o sistema solicitará a troca no primeiro acesso) ou clique no botão abaixo para definir sua senha de acesso:</p>
         <p style="margin: 30px 0; text-align: center;">
-          <a href="${actionLink}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Definir minha senha</a>
+          <a href="${actionLink}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Acessar a Plataforma</a>
         </p>
         <p style="font-size: 12px; color: #64748b;">Se o botão não funcionar, copie e cole este endereço no navegador:<br /><span style="word-break: break-all;">${actionLink}</span></p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
@@ -233,7 +237,12 @@ export const createUser = createServerFn({ method: "POST" })
 
       const textContent = `Olá, ${data.full_name},
 
-Sua conta foi criada no Notifica-MA Intelligence. Para definir sua senha de acesso, abra o link abaixo (válido por até 1 hora):
+Sua conta foi criada no Notifica-MA Intelligence.
+
+Sua senha temporária de acesso é:
+${tempPassword}
+
+Para acessar a plataforma e definir sua senha de acesso, utilize o link abaixo:
 
 ${actionLink}
 
@@ -247,7 +256,7 @@ Ministério da Saúde — SVSA`;
           to: data.email,
           from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
           sender_domain: "notify.consulti.slz.br",
-          subject: "Defina sua senha de acesso — Notifica-MA Intelligence",
+          subject: "Sua conta de acesso — Notifica-MA Intelligence",
           html: htmlContent,
           text: textContent,
           purpose: "transactional",
@@ -265,7 +274,7 @@ Ministério da Saúde — SVSA`;
 
     await audit(
       "invite_user",
-      `Criou usuário ${data.email} com perfil ${data.role}. E-mail de definição de senha: ${emailStatus}.`,
+      `Criou usuário ${data.email} com perfil ${data.role}. E-mail de cadastro: ${emailStatus}.`,
       { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
       newId,
       { role: data.role, full_name: data.full_name, emailStatus },
@@ -275,6 +284,7 @@ Ministério da Saúde — SVSA`;
       id: newId,
       email: data.email,
       full_name: data.full_name,
+      password: tempPassword,
       emailStatus,
       dnsMissing: dns.missing,
     };
