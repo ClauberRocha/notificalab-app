@@ -113,6 +113,7 @@ export const CRITERIO_CONFIRMACAO = [
   opt("clinico_epidemiologico", "Clínico-epidemiológico"),
   opt("isolamento_viral", "Isolamento viral"),
   opt("pcr", "PCR"),
+  opt("necropsia", "Necropsia"),
   opt("outros", "Outros"),
 ];
 
