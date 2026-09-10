@@ -48,7 +48,22 @@ interface DohAnswer {
   data: string
 }
 
-export const dohResolver: DnsResolver = async (name, type) => {
+export const defaultDnsResolver: DnsResolver = async (name, type) => {
+  // 1. Resolução nativa Node (DNS do sistema/servidor)
+  try {
+    const dns = await import('node:dns/promises')
+    if (type === 'TXT') {
+      const txt = await dns.resolveTxt(name)
+      return txt.map((chunks) => chunks.join(''))
+    }
+    if (type === 'NS') {
+      return await dns.resolveNs(name)
+    }
+  } catch {
+    // fallback para DoH se a resolução nativa não retornar
+  }
+
+  // 2. Resolvedores DoH públicos como fallback
   const endpoints = [
     `https://dns.google/resolve?name=${encodeURIComponent(name)}&type=${type}`,
     `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`,
@@ -62,13 +77,15 @@ export const dohResolver: DnsResolver = async (name, type) => {
       if (!res.ok) continue
       const json = (await res.json()) as { Answer?: DohAnswer[] }
       const answers = json.Answer ?? []
-      return answers.map((a) =>
-        a.data
-          .replace(/^"|"$/g, '')
-          .replace(/\\"/g, '"')
-          .replace(/\.$/, '')
-          .trim(),
-      )
+      if (answers.length > 0) {
+        return answers.map((a) =>
+          a.data
+            .replace(/^"|"$/g, '')
+            .replace(/\\"/g, '"')
+            .replace(/\.$/, '')
+            .trim(),
+        )
+      }
     } catch {
       // tenta o próximo resolver
     }
@@ -76,12 +93,14 @@ export const dohResolver: DnsResolver = async (name, type) => {
   return []
 }
 
+export const dohResolver = defaultDnsResolver
+
 /**
  * Avalia o estado dos registros com um resolvedor arbitrário — sem cache.
  * Exportado para permitir testes sem rede.
  */
 export async function evaluateSenderDns(
-  resolver: DnsResolver = dohResolver,
+  resolver: DnsResolver = defaultDnsResolver,
 ): Promise<SenderDnsStatus> {
   const [txtRecords, nsRecords] = await Promise.all([
     resolver(VERIFY_TXT_NAME, 'TXT'),

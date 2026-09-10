@@ -257,6 +257,13 @@ function UsuariosPage() {
       queryClient.invalidateQueries({ queryKey: ["users-list"] });
       setCreateOpen(false);
       setLastCreatedId(res.id);
+      if (res.password) {
+        setTempPasswordInfo({
+          email: res.email,
+          password: res.password,
+          emailStatus: res.emailStatus,
+        });
+      }
       setConfirmInfo({
         title: "Usuário criado com sucesso!",
         description:
@@ -264,7 +271,9 @@ function UsuariosPage() {
             ? `Um e-mail foi enviado para ${res.email} contendo a senha temporária e as instruções para o primeiro acesso.`
             : res.emailStatus === "dns_pending"
               ? `O usuário foi criado, mas o e-mail NÃO foi enviado: o domínio de envio ainda não está verificado no DNS.\n\nRepasse a senha temporária gerada ao usuário por outro canal seguro.`
-              : `O usuário foi criado, mas houve uma falha no envio do e-mail. Use "Reenviar convite" ou repasse a senha temporária gerada.`,
+              : res.emailStatus === "suppressed"
+                ? `O usuário foi criado, mas o e-mail está na lista de supressão.\n\nRepasse a senha temporária gerada ao usuário por outro canal seguro.`
+                : `O usuário foi criado, mas houve uma falha no envio do e-mail. Use "Reenviar convite" ou repasse a senha temporária gerada.`,
       });
       setConfirmOpen(true);
     },

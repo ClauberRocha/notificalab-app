@@ -27,26 +27,34 @@ interface Props {
   fullName?: string
   loginUrl?: string
   tempPassword?: string
+  isNewUser?: boolean
 }
 
-const Email = ({ fullName, loginUrl, tempPassword }: Props) => {
-  const url = loginUrl || 'https://consulti.slz.br/auth'
+const Email = ({ fullName, loginUrl, tempPassword, isNewUser }: Props) => {
+  const url = loginUrl || 'https://notificalab.consulti.slz.br/auth'
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Uma senha temporária foi gerada para o seu acesso</Preview>
+      <Preview>
+        {isNewUser
+          ? 'Sua conta foi criada no Notifica-MA Intelligence'
+          : 'Uma senha temporária foi gerada para o seu acesso'}
+      </Preview>
       <Body style={main}>
         <Container style={container}>
           <Section>
             <Text style={badge}>Notifica-MA Intelligence</Text>
           </Section>
-          <Heading style={h1}>Senha temporária gerada</Heading>
+          <Heading style={h1}>
+            {isNewUser ? 'Bem-vindo ao Notifica-MA Intelligence' : 'Senha temporária gerada'}
+          </Heading>
           <Text style={text}>
             {fullName ? `Olá, ${fullName},` : 'Olá,'}
           </Text>
           <Text style={text}>
-            Um administrador gerou uma <strong>senha temporária</strong> para a sua
-            conta na Plataforma Estadual de Monitoramento e Decisão em Saúde.
+            {isNewUser
+              ? 'Sua conta de acesso foi criada na Plataforma Estadual de Monitoramento e Decisão em Saúde.'
+              : 'Um administrador gerou uma senha temporária para a sua conta na Plataforma Estadual de Monitoramento e Decisão em Saúde.'}
           </Text>
           {tempPassword ? (
             <>
@@ -85,8 +93,9 @@ const Email = ({ fullName, loginUrl, tempPassword }: Props) => {
             Acessar a plataforma
           </Button>
           <Text style={text}>
-            Se você não solicitou esta alteração, entre em contato imediatamente
-            com a equipe responsável pelo sistema.
+            {isNewUser
+              ? 'Guarde seus dados com segurança. Caso tenha dúvidas, entre em contato com a equipe de suporte.'
+              : 'Se você não solicitou esta alteração, entre em contato imediatamente com a equipe responsável pelo sistema.'}
           </Text>
           <Hr style={hr} />
           <Text style={footer}>
@@ -101,11 +110,15 @@ const Email = ({ fullName, loginUrl, tempPassword }: Props) => {
 
 export const template = {
   component: Email,
-  subject: 'Senha temporária gerada — troque no primeiro acesso',
-  displayName: 'Senha temporária gerada',
+  subject: (data) =>
+    data?.isNewUser
+      ? 'Bem-vindo ao Notifica-MA Intelligence — dados de acesso'
+      : 'Senha temporária gerada — troque no primeiro acesso',
+  displayName: 'Senha temporária / Boas-vindas',
   previewData: {
     fullName: 'Maria Silva',
-    loginUrl: 'https://consulti.slz.br/auth',
+    loginUrl: 'https://notificalab.consulti.slz.br/auth',
     tempPassword: 'AbCdE-fGhJk!42',
+    isNewUser: true,
   },
 } satisfies TemplateEntry

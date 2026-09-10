@@ -179,103 +179,56 @@ export const createUser = createServerFn({ method: "POST" })
       .insert({ user_id: newId, role: data.role });
     if (rErr) throw new Error(rErr.message);
 
-    // Gera link de recuperação para o usuário definir a própria senha.
-    let actionLink = "https://notify.consulti.slz.br";
+    const actor = {
+      id: context.userId,
+      email: context.claims?.email ?? null,
+      role: actorTop,
+    };
+
+    let emailStatus: "sent" | "dns_pending" | "suppressed" | "error" = "sent";
+    let dnsMissing: string[] = [];
+
     try {
-      const { data: linkData, error: linkErr } =
-        await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email: data.email,
-        });
-      if (!linkErr && linkData?.properties?.action_link) {
-        actionLink = linkData.properties.action_link;
+      const { sendTemplateEmail } = await import(
+        "@/lib/email-templates/send-email"
+      );
+
+      const result = await sendTemplateEmail("temp-password", data.email, {
+        templateData: {
+          fullName: data.full_name,
+          loginUrl: "https://notificalab.consulti.slz.br/auth",
+          tempPassword,
+          isNewUser: true,
+        },
+        idempotencyKey: `user-create-${newId}-${Date.now()}`,
+      });
+
+      if (result.sent) {
+        emailStatus = "sent";
+      } else if (result.reason === "sender_dns_not_ready") {
+        emailStatus = "dns_pending";
+        dnsMissing = result.missing;
+      } else {
+        emailStatus = "suppressed";
       }
     } catch (e) {
-      console.error("Falha ao gerar link de definição de senha:", e);
-    }
-
-    // Só enfileira o e-mail quando os registros DNS do domínio de envio
-    // estiverem publicados e visíveis na consulta pública.
-    const { checkSenderDnsReady } = await import(
-      "@/lib/email-templates/dns-check.server"
-    );
-    const dns = await checkSenderDnsReady();
-    let emailStatus: "sent" | "dns_pending" | "error" = "sent";
-
-    if (!dns.ready) {
-      emailStatus = "dns_pending";
-    } else {
-      // Enfileira e-mail de boas-vindas com a senha temporária e o link de acesso.
-      const messageId = crypto.randomUUID();
-      await supabaseAdmin.from("email_send_log").insert({
-        message_id: messageId,
-        template_name: "invite_set_password",
-        recipient_email: data.email,
-        status: "pending",
+      console.error("Falha ao enviar e-mail de criação de usuário:", e);
+      emailStatus = "error";
+      const { logEmailAttempt } = await import("@/lib/email-audit.server");
+      await logEmailAttempt({
+        result: "erro",
+        template: "temp-password",
+        recipient: data.email,
+        errorMessage: e instanceof Error ? e.message : String(e),
+        actor,
+        entityId: newId,
       });
-
-      const htmlContent = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
-        <h2 style="color: #2563eb; margin-bottom: 20px;">Bem-vindo ao Notifica-MA Intelligence</h2>
-        <p>Olá, <strong>${data.full_name}</strong>,</p>
-        <p>Sua conta foi criada na Plataforma Estadual de Monitoramento e Decisão em Saúde.</p>
-        <p>Sua <strong>senha temporária de acesso</strong> é:</p>
-        <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px; color: #0f172a; text-align: center; margin: 20px 0;">
-          ${tempPassword}
-        </div>
-        <p>Para começar, acesse a plataforma e utilize sua senha temporária (o sistema solicitará a troca no primeiro acesso) ou clique no botão abaixo para definir sua senha de acesso:</p>
-        <p style="margin: 30px 0; text-align: center;">
-          <a href="${actionLink}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Acessar a Plataforma</a>
-        </p>
-        <p style="font-size: 12px; color: #64748b;">Se o botão não funcionar, copie e cole este endereço no navegador:<br /><span style="word-break: break-all;">${actionLink}</span></p>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-        <p style="font-size: 11px; color: #64748b; text-align: center;">
-          Ministério da Saúde — Secretaria de Vigilância em Saúde e Ambiente (SVSA)
-        </p>
-      </div>
-    `;
-
-      const textContent = `Olá, ${data.full_name},
-
-Sua conta foi criada no Notifica-MA Intelligence.
-
-Sua senha temporária de acesso é:
-${tempPassword}
-
-Para acessar a plataforma e definir sua senha de acesso, utilize o link abaixo:
-
-${actionLink}
-
-Ministério da Saúde — SVSA`;
-
-      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
-        queue_name: "auth_emails",
-        payload: {
-          run_id: crypto.randomUUID(),
-          message_id: messageId,
-          to: data.email,
-          from: `Notifica-MA Intelligence <noreply@consulti.slz.br>`,
-          sender_domain: "notify.consulti.slz.br",
-          subject: "Sua conta de acesso — Notifica-MA Intelligence",
-          html: htmlContent,
-          text: textContent,
-          purpose: "transactional",
-          label: "invite_set_password",
-          queued_at: new Date().toISOString(),
-        },
-      });
-
-      if (enqueueError) {
-        console.error("Failed to enqueue invite email:", enqueueError);
-        emailStatus = "error";
-      }
     }
-
 
     await audit(
       "invite_user",
       `Criou usuário ${data.email} com perfil ${data.role}. E-mail de cadastro: ${emailStatus}.`,
-      { id: context.userId, email: context.claims?.email ?? null, role: actorTop },
+      actor,
       newId,
       { role: data.role, full_name: data.full_name, emailStatus },
     );
@@ -286,9 +239,8 @@ Ministério da Saúde — SVSA`;
       full_name: data.full_name,
       password: tempPassword,
       emailStatus,
-      dnsMissing: dns.missing,
+      dnsMissing,
     };
-
   });
 
 export const updateUser = createServerFn({ method: "POST" })
