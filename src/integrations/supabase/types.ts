@@ -1745,11 +1745,13 @@ export type Database = {
           especificacao_confirmado: string | null
           evolucao_caso: string | null
           exame_quimiocitologico: Json | null
+          faixa_etaria: string | null
           funcao_investigador: string | null
           gestante: string | null
           id: string
           idade: number | null
           logradouro: string | null
+          macroregiao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -1771,6 +1773,7 @@ export type Database = {
           puncao_lombar: string | null
           quimioprofilaxia_comunicantes: string | null
           raca_cor: string | null
+          regional: string | null
           resultados_laboratoriais: Json | null
           sexo: string | null
           sinais_sintomas: Json | null
@@ -1830,11 +1833,13 @@ export type Database = {
           especificacao_confirmado?: string | null
           evolucao_caso?: string | null
           exame_quimiocitologico?: Json | null
+          faixa_etaria?: string | null
           funcao_investigador?: string | null
           gestante?: string | null
           id?: string
           idade?: number | null
           logradouro?: string | null
+          macroregiao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1856,6 +1861,7 @@ export type Database = {
           puncao_lombar?: string | null
           quimioprofilaxia_comunicantes?: string | null
           raca_cor?: string | null
+          regional?: string | null
           resultados_laboratoriais?: Json | null
           sexo?: string | null
           sinais_sintomas?: Json | null
@@ -1915,11 +1921,13 @@ export type Database = {
           especificacao_confirmado?: string | null
           evolucao_caso?: string | null
           exame_quimiocitologico?: Json | null
+          faixa_etaria?: string | null
           funcao_investigador?: string | null
           gestante?: string | null
           id?: string
           idade?: number | null
           logradouro?: string | null
+          macroregiao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1941,6 +1949,7 @@ export type Database = {
           puncao_lombar?: string | null
           quimioprofilaxia_comunicantes?: string | null
           raca_cor?: string | null
+          regional?: string | null
           resultados_laboratoriais?: Json | null
           sexo?: string | null
           sinais_sintomas?: Json | null
