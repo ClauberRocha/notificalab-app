@@ -99,6 +99,8 @@ export const ESPECIFICACAO_CONFIRMADO = [
   opt("meningite_outra_etiologia", "Meningite por outra etiologia"),
   opt("meningite_hemofilo", "Meningite por hemófilo"),
   opt("meningite_pneumococos", "Meningite por pneumococos"),
+  opt("meningite_viral", "Meningite viral"),
+  opt("meningite_asseptica_criptococos", "Meningite asséptica p/ criptococos"),
 ];
 
 export const CRITERIO_CONFIRMACAO = [
