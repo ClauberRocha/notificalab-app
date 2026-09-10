@@ -118,6 +118,7 @@ export const CRITERIO_CONFIRMACAO = [
 ];
 
 export const EVOLUCAO_CASO = [
+  opt("internado", "Internado(a)"),
   opt("alta", "Alta"),
   opt("obito_meningite", "Óbito por meningite"),
   opt("obito_outra_causa", "Óbito por outra causa"),
