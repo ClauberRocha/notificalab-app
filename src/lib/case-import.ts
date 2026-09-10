@@ -1,5 +1,6 @@
 // Helpers genéricos de importação de planilha (Excel/CSV) para as fichas de agravo.
 import { CASE_COLUMNS, type ColumnKind } from "@/lib/case-import-columns";
+import { getRegionalAndMacro } from "@/data/regional-macro";
 
 export type ImportField = {
   name: string;
