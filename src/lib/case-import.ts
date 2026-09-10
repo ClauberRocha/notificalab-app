@@ -293,6 +293,8 @@ export function buildRows(
       payload[field.name] = String(raw).trim();
     });
 
+    deriveComputedFields(payload, byName);
+
     for (const f of fields) {
       if (f.required && (payload[f.name] === undefined || payload[f.name] === "")) {
         errors.push({ field: f.name, label: f.label, message: "obrigatório" });
