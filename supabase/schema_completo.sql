@@ -1228,11 +1228,11 @@ ALTER TABLE public.tuberculose_cases ENABLE ROW LEVEL SECURITY;
 -- TABELA: user_roles
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.user_roles (
-  created_at timestamp with time zone DEFAULT now(),
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  role public.app_role NOT NULL,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, role)
+  role public.app_role NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  UNIQUE (user_id, role)
 );
 
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
