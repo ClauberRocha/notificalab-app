@@ -34,7 +34,8 @@ export default defineConfig({
     plugins: [
       VitePWA({
         registerType: "autoUpdate",
-        injectRegister: "auto",
+        injectRegister: null,
+        devOptions: { enabled: false },
         manifest: {
           name: "Notifica-MA Intelligence",
           short_name: "Notifica-MA",
@@ -47,24 +48,49 @@ export default defineConfig({
           scope: "/",
           icons: [
             {
-              src: "/favicon.ico",
-              sizes: "64x64 32x32 24x24 16x16",
-              type: "image/x-icon",
+              src: "/pwa-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "/pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "/pwa-maskable-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
             },
           ],
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           navigateFallback: "/",
-          navigateFallbackDenylist: [/^\/api\//, /^\/_/],
+          navigateFallbackDenylist: [/^\/api\//, /^\/_/, /^\/~oauth/],
           runtimeCaching: [
             {
-              urlPattern: ({ request }) =>
-                request.destination === "image" ||
-                request.destination === "font",
+              urlPattern: ({ request, url }) =>
+                request.mode === "navigate" &&
+                url.origin === self.location.origin &&
+                !url.pathname.startsWith("/~oauth"),
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "app-pages",
+                networkTimeoutSeconds: 5,
+              },
+            },
+            {
+              urlPattern: ({ request, url }) =>
+                url.origin === self.location.origin &&
+                /-[A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(url.pathname) &&
+                (request.destination === "script" || request.destination === "style"),
               handler: "CacheFirst",
               options: {
-                cacheName: "static-assets",
+                cacheName: "hashed-assets",
                 expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
               },
             },
