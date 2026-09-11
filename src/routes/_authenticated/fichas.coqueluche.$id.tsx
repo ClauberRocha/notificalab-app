@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Children, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteCase, updateCase } from "@/lib/offline/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,10 +152,7 @@ function FichaCoquelucheDetalhesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("coqueluche_cases")
-        .delete()
-        .eq("id", id);
+      const { error } = await deleteCase("coqueluche_cases", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -167,13 +165,10 @@ function FichaCoquelucheDetalhesPage() {
 
   const encerrarMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("coqueluche_cases")
-        .update({
-          status: "encerrado",
-          data_encerramento: new Date().toISOString().split("T")[0],
-        })
-        .eq("id", id);
+      const { error } = await updateCase("coqueluche_cases", id, {
+        status: "encerrado",
+        data_encerramento: new Date().toISOString().split("T")[0],
+      });
       if (error) throw error;
     },
     onSuccess: () => {
