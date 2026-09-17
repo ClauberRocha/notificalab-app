@@ -842,6 +842,39 @@ function PainelPage() {
 
   const regionalMacroTotal = regionalMacroData.reduce((sum, item) => sum + item.value, 0);
 
+  const regionalResponseTime = useMemo(() => {
+    const byRegional = new Map<string, { totalDays: number; count: number }>();
+
+    filtered.forEach((c) => {
+      if (!c.data_notificacao || !c.data_encerramento) return;
+
+      const start = new Date(c.data_notificacao as string);
+      const end = new Date(c.data_encerramento as string);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+
+      const days = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      if (days < 0) return;
+
+      const rawRegional = String(c.regional || "").trim();
+      const regional = !rawRegional || rawRegional === "-" ? "Não informado" : rawRegional;
+      const current = byRegional.get(regional) ?? { totalDays: 0, count: 0 };
+      current.totalDays += days;
+      current.count += 1;
+      byRegional.set(regional, current);
+    });
+
+    const averages = Array.from(byRegional, ([regional, values]) => ({
+      regional,
+      averageDays: values.totalDays / values.count,
+      count: values.count,
+    })).sort((a, b) => a.averageDays - b.averageDays || a.regional.localeCompare(b.regional, "pt-BR"));
+
+    return {
+      fastest: averages[0] ?? null,
+      slowest: averages[averages.length - 1] ?? null,
+    };
+  }, [filtered]);
+
   const racaLabels: Record<string, string> = {
     branca: "Branca",
     preta: "Preta",
@@ -1378,6 +1411,48 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                   </CardContent>
                 </Card>
               </div>
+
+              {selectedAgravo === "meningite" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="border-emerald-500/30 bg-emerald-500/5">
+                    <CardContent className="p-5 min-h-36 flex flex-col justify-between gap-3">
+                      <p className="text-xs font-bold uppercase text-emerald-600">Regional com resposta mais rápida</p>
+                      {regionalResponseTime.fastest ? (
+                        <div>
+                          <p className="text-xl font-extrabold text-foreground">{regionalResponseTime.fastest.regional}</p>
+                          <p className="text-2xl font-extrabold text-emerald-600">
+                            {regionalResponseTime.fastest.averageDays.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} dias
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {regionalResponseTime.fastest.count} {regionalResponseTime.fastest.count === 1 ? "caso considerado" : "casos considerados"}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Sem casos com datas válidas</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-destructive/30 bg-destructive/5">
+                    <CardContent className="p-5 min-h-36 flex flex-col justify-between gap-3">
+                      <p className="text-xs font-bold uppercase text-destructive">Regional com maior tempo de resposta</p>
+                      {regionalResponseTime.slowest ? (
+                        <div>
+                          <p className="text-xl font-extrabold text-foreground">{regionalResponseTime.slowest.regional}</p>
+                          <p className="text-2xl font-extrabold text-destructive">
+                            {regionalResponseTime.slowest.averageDays.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} dias
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {regionalResponseTime.slowest.count} {regionalResponseTime.slowest.count === 1 ? "caso considerado" : "casos considerados"}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Sem casos com datas válidas</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
               {/* Weekly trend chart and summary side metrics */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
