@@ -1468,11 +1468,30 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                               data={sexoData}
                               cx="50%"
                               cy="50%"
-                              innerRadius={55}
+                              innerRadius={50}
                               outerRadius={80}
                               paddingAngle={3}
                               dataKey="value"
-                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                              label={({ cx, cy, midAngle, innerRadius, outerRadius, name, percent, value }) => {
+                                const radius = Number(innerRadius) + (Number(outerRadius) - Number(innerRadius)) * 1.55;
+                                const x = Number(cx) + radius * Math.cos((-Number(midAngle) * Math.PI) / 180);
+                                const y = Number(cy) + radius * Math.sin((-Number(midAngle) * Math.PI) / 180);
+                                const quantity = Number(value);
+
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    fill="currentColor"
+                                    textAnchor={x > Number(cx) ? "start" : "end"}
+                                    dominantBaseline="central"
+                                    className="text-[10px] font-medium"
+                                  >
+                                    <tspan x={x} dy="-0.35em">{`${name} (${(Number(percent) * 100).toFixed(1)}%)`}</tspan>
+                                    <tspan x={x} dy="1.35em" className="fill-muted-foreground">{`${quantity} ${quantity === 1 ? "caso" : "casos"}`}</tspan>
+                                  </text>
+                                );
+                              }}
                             >
                               {sexoData.map((_, i) => (
                                 <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
