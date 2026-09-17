@@ -1,16 +1,17 @@
-# Correções pontuais para instalação PWA
+# Ajuste do gráfico de Distribuição por Gênero
 
-## Implementação
-- Gerar, a partir do logo existente, ícones PNG de 192 px, 512 px e 512 px maskable, centralizados com margem segura.
-- Atualizar somente a configuração PWA necessária: ícones do manifesto, injeção manual, registro imediato e proteção contra registro no preview/desenvolvimento.
-- Adicionar ao documento o manifesto e a cor de tema.
-- Preservar integralmente a fila offline existente.
-- Trocar apenas gravações de fichas que ainda atualizam diretamente por `updateCase`; manter consultas e demais fluxos intactos.
+## Alteração
+- Engrossar discretamente a rosca, reduzindo apenas o raio interno e preservando o tamanho externo do gráfico.
+- Substituir o rótulo atual por duas linhas:
+  - gênero e percentual na primeira linha;
+  - quantidade de casos na segunda linha, com singular/plural adequado.
+- Manter cores, filtros, tooltip, legenda, exportação e demais gráficos inalterados.
 
 ## Validação
-- Conferir os tipos, o registro/manifesto renderizado e o resultado visual dos ícones.
-- Verificar o build automático e confirmar que não restaram gravações diretas nos formulários de agravos.
+- Conferir o gráfico com diferentes quantidades por gênero.
+- Verificar legibilidade e ausência de cortes em telas grandes e pequenas.
+- Confirmar a compilação do projeto.
 
 ## Detalhes técnicos
-- O service worker continuará sendo gerado pelo `vite-plugin-pwa`, mas terá um único registro controlado e não será ativado no preview, iframe ou desenvolvimento.
-- A navegação OAuth continuará excluída do cache do aplicativo.
+- Alteração restrita ao gráfico `Distribuição por Gênero` em `src/routes/_authenticated/painel.tsx`.
+- Usar um rótulo personalizado do Recharts para posicionar percentual e total em linhas separadas.
