@@ -69,6 +69,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { getSeNumber } from "@/lib/seUtils";
+import { getRegionalAndMacro } from "@/data/regional-macro";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -315,12 +316,14 @@ function PainelPage() {
   const faixaChartRef = useRef<HTMLDivElement>(null);
   const racaChartRef = useRef<HTMLDivElement>(null);
   const sexoChartRef = useRef<HTMLDivElement>(null);
+  const regionalChartRef = useRef<HTMLDivElement>(null);
   const mesChartRef = useRef<HTMLDivElement>(null);
   useChartOutsideDismiss(seChartRef);
   useChartOutsideDismiss(faixaChartRef);
   useChartOutsideDismiss(racaChartRef);
   useChartOutsideDismiss(mesChartRef);
   useChartOutsideDismiss(sexoChartRef);
+  useChartOutsideDismiss(regionalChartRef);
 
 
   const [selectedAgravo, setSelectedAgravo] = useGlobalAgravo();
@@ -819,6 +822,25 @@ function PainelPage() {
   const sexoData = Object.entries(sexoCounts)
     .filter(([, v]) => v > 0)
     .map(([name, value]) => ({ name, value }));
+
+  const regionalMacroData = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    filtered.forEach((c) => {
+      const municipio = String(c.municipio_residencia || "");
+      const derived = getRegionalAndMacro(municipio);
+      const regional = String(c.regional || derived.regional || "Não informado").trim() || "Não informado";
+      const macroregional = String(c.macroregiao || c.macroregional || derived.macroregiao || "Não informado").trim() || "Não informado";
+      const name = `${regional} / ${macroregional}`;
+      counts[name] = (counts[name] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }));
+  }, [filtered]);
+
+  const regionalMacroTotal = regionalMacroData.reduce((sum, item) => sum + item.value, 0);
 
   const racaLabels: Record<string, string> = {
     branca: "Branca",
@@ -1508,6 +1530,55 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="glass-card border-border/50">
+                <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+                  <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Distribuição por Regional e Macroregional</CardTitle>
+                  <ChartExportButtons targetRef={regionalChartRef} filename="distribuicao-por-regional-e-macroregional" />
+                </CardHeader>
+                <CardContent>
+                  {regionalMacroData.length > 0 ? (
+                    <div ref={regionalChartRef} className="bg-background w-full">
+                      <ResponsiveContainer width="100%" height={isMobile ? 360 : 340}>
+                        <PieChart>
+                          <Pie
+                            data={regionalMacroData}
+                            cx="50%"
+                            cy={isMobile ? "40%" : "44%"}
+                            innerRadius={isMobile ? 58 : 72}
+                            outerRadius={isMobile ? 88 : 108}
+                            paddingAngle={2}
+                            dataKey="value"
+                            nameKey="name"
+                          >
+                            {regionalMacroData.map((_, i) => (
+                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <text x="50%" y={isMobile ? "38%" : "42%"} textAnchor="middle" dominantBaseline="central" className="fill-muted-foreground text-[10px] font-medium">
+                            Total de casos
+                          </text>
+                          <text x="50%" y={isMobile ? "44%" : "48%"} textAnchor="middle" dominantBaseline="central" className="fill-foreground text-xl font-bold">
+                            {formatValue(regionalMacroTotal)}
+                          </text>
+                          <Tooltip content={<CustomTooltip categoryLabel="Área" />} trigger={isMobile ? "click" : "hover"} />
+                          <Legend
+                            verticalAlign="bottom"
+                            wrapperStyle={{ fontSize: 10, lineHeight: "18px" }}
+                            formatter={(value, entry) => (
+                              <span className="text-muted-foreground font-medium text-[10px]">
+                                {value} — {formatValue(entry?.payload?.value)}
+                              </span>
+                            )}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-16 text-center">Sem dados</p>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Row 2: Raça/Cor and Confirmatory Criteria */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
