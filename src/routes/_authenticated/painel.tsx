@@ -844,6 +844,7 @@ function PainelPage() {
 
   const regionalResponseTime = useMemo(() => {
     const byRegional = new Map<string, { totalDays: number; count: number }>();
+    let invertedDatesCount = 0;
 
     filtered.forEach((c) => {
       if (!c.data_notificacao || !c.data_encerramento) return;
@@ -853,7 +854,10 @@ function PainelPage() {
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
 
       const days = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-      if (days < 0) return;
+      if (days < 0) {
+        invertedDatesCount += 1;
+        return;
+      }
 
       const rawRegional = String(c.regional || "").trim();
       const regional = !rawRegional || rawRegional === "-" ? "Não informado" : rawRegional;
@@ -872,6 +876,7 @@ function PainelPage() {
     return {
       fastest: averages[0] ?? null,
       slowest: averages[averages.length - 1] ?? null,
+      invertedDatesCount,
     };
   }, [filtered]);
 
@@ -1451,6 +1456,14 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                       )}
                     </CardContent>
                   </Card>
+                  {regionalResponseTime.invertedDatesCount > 0 && (
+                    <div role="status" className="sm:col-span-2 flex items-start gap-2 border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                      <p>
+                        {regionalResponseTime.invertedDatesCount} {regionalResponseTime.invertedDatesCount === 1 ? "caso com data de encerramento anterior à notificação foi desconsiderado" : "casos com data de encerramento anterior à notificação foram desconsiderados"} das médias.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
