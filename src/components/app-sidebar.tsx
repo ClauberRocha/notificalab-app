@@ -157,6 +157,8 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2 py-3 space-y-4">
         {groups.map((group) => {
+          // Administração e Sistema: exclusivos do Administrador
+          if ((group.label === "Administração" || group.label === "Sistema") && role !== "admin") return null;
           const visibleGroupItems = group.items.filter((it) => {
             // Esconde itens do painel/configurações para usuário comum
             if (role === "user" && it.url.startsWith("/painel")) return false;
