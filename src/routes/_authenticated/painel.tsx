@@ -373,9 +373,10 @@ function PainelPage() {
     queryFn: async (): Promise<PainelResumo> => {
       const { data, error } = await supabase.rpc("painel_resumo", {
         p_agravo: selectedAgravo,
-        p_inicio: undefined,
-        p_fim: undefined,
-        p_municipio: selectedMunicipio === "all" ? undefined : selectedMunicipio,
+        // PostgreSQL accepts null dates; generated RPC types describe only strings.
+        p_inicio: null as unknown as string,
+        p_fim: null as unknown as string,
+        p_municipio: selectedMunicipio === "all" ? null as unknown as string : selectedMunicipio,
         p_filtros: rpcFilters,
       });
       if (error) throw error;
@@ -730,7 +731,7 @@ function PainelPage() {
   const mesData = (resumo?.serie_mensal ?? []).map((d) => ({ mes: `${MESES[Number(d.mes.slice(5)) - 1]}/${d.mes.slice(2,4)}`, notificados: d.notificados, confirmados: d.confirmados }));
   // Compatibility adapter for the unchanged map: anonymous municipality/count
   // aggregates only. No patient records are loaded to display the map.
-  const mapCases = useMemo(() => (resumo?.ranking_municipios ?? []).flatMap((m) => Array.from({ length: mapMetric === "confirmados" ? m.confirmados : m.notificados }, () => ({ municipio_notificacao: m.municipio, classificacao_caso: "confirmado" }))), [resumo, mapMetric]);
+  const mapCases = useMemo(() => (resumo?.ranking_municipios ?? []).flatMap((m) => Array.from({ length: mapMetric === "confirmados" ? m.confirmados : m.notificados }, () => ({ _tipo: selectedAgravo, municipio_notificacao: m.municipio, classificacao_caso: "confirmado" }))), [resumo, mapMetric, selectedAgravo]);
 
   // Active filters check
   const anyFilter =
