@@ -29,6 +29,13 @@
       "when": 1791384266296,
       "tag": "0003_user_territorios_pode_ver",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791384291230,
+      "tag": "0004_territorio_unico_usuario",
+      "breakpoints": true
     }
   ]
 }
