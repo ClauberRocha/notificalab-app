@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Criar territórios de usuários e função pode_ver sem alterar políticas de casos.
+- [ ] Adicionar território aos formulários de criar/editar usuários e validar segurança e gravação.
+
 - [x] Gerar e configurar os ícones PWA.
 - [x] Injetar manifesto e registrar o service worker com proteção de preview.
 - [x] Corrigir gravações restantes para usar a fila offline.
