@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useRef, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildCriterioData, assertCriterioOrder } from "@/lib/criterio-confirmacao";
+import { CRITERIO_CONFIRMACAO_KEYS } from "@/lib/criterio-confirmacao";
 import {
   hasAgravoSelected,
   shouldRunAgravoQuery,
@@ -83,7 +83,7 @@ type PainelSearch = {
 };
 
 export const Route = createFileRoute("/_authenticated/painel")({
-  head: () => ({ meta: [{ title: "Notifica-MA Intelligence — Monitoramento e Decisão" }] }),
+  head: () => ({ meta: [{ title: "Painel epidemiológico — Notifica-MA" }, { name: "description", content: "Monitoramento epidemiológico por agravo, município e perfil demográfico no Notifica-MA." }, { property: "og:title", content: "Painel epidemiológico — Notifica-MA" }, { property: "og:description", content: "Indicadores e análises epidemiológicas com filtros por agravo e município." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   beforeLoad: ({ search, context }) => {
     // role já vem do layout pai (_authenticated) — sem fetch extra aqui.
     const role = (context as { role?: string }).role;
@@ -289,15 +289,22 @@ function ChartExportButtons({
 
 
 
-async function fetchAgravo(a: AgravoDef): Promise<CaseRow[]> {
-  const { data, error } = await (supabase as any)
-    .from(a.table)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error || !data) return [];
-  return data.map((r: any) => ({ ...r, _tipo: a.key }));
-}
+type Distribution = { valor: string; quantidade: number };
+type RegionalTime = { regional: string; averageDays: number; count: number };
+type PainelResumo = {
+  totais: { notificados: number; confirmados: number; encerrados: number; em_aberto: number; obitos_confirmados: number; letalidade: number; media_investigacao: number };
+  qualidade: number;
+  serie_semanal: Array<{ se: number; notificados: number; confirmados: number }>;
+  serie_mensal: Array<{ mes: string; notificados: number; confirmados: number }>;
+  serie_diaria: Array<{ data: string; municipio: string; notificados: number; confirmados: number }>;
+  ranking_municipios: Array<{ municipio: string; notificados: number; confirmados: number; investigacao: number; obitos: number }>;
+  municipios_opcoes: string[];
+  distribuicoes: { sexo: Distribution[]; faixa_etaria: Distribution[]; raca_cor: Distribution[]; criterio: Distribution[] };
+  regionais: Array<{ municipio: string | null; regional: string | null; macroregiao: string | null; quantidade: number }>;
+  tempos_regionais: RegionalTime[];
+  datas_invertidas: number;
+};
+const FAIXAS: Record<string, string> = { "<1": "< 1 ano", "1-10": "1 a 10 anos", "11-20": "11 a 20 anos", "21-30": "21 a 30 anos", "31-40": "31 a 40 anos", "41-50": "41 a 50 anos", "51-60": "51 a 60 anos", "61-70": "61 a 70 anos", "70+": "Acima de 70 anos" };
 
 function PainelPage() {
   const { tab: activeTab = "dashboard" } = Route.useSearch();
@@ -352,28 +359,36 @@ function PainelPage() {
   const [enableEmails, setEnableEmails] = useState(true);
 
 
-  const queries = AGRAVOS.map((a) =>
-    useQuery({
-      queryKey: ["painel", a.key, selectedAgravo],
-      queryFn: () => fetchAgravo(a),
-      staleTime: 60_000,
-      enabled: shouldRunAgravoQuery(selectedAgravo, a.key),
-    })
-  );
-
-  // Loader gating: skeletons only appear when an agravo is selected AND the
-  // matching query is actually fetching. When the agravo is cleared, all
-  // queries are disabled (enabled=false), isLoading is false, and the
-  // placeholders render directly — no flicker between skeleton and empty
-  // state.
-  const isLoading =
-    hasAgravoSelected(selectedAgravo) && queries.some((q) => q.isLoading);
-  const allData = queries.flatMap((q) => q.data ?? []);
-  const allCases = useMemo<CaseRow[]>(() => allData, [JSON.stringify(allData.map((c) => c.id))]);
-
-  const byAgravo = !hasAgravoSelected(selectedAgravo)
-    ? []
-    : allCases.filter((c) => c._tipo === selectedAgravo);
+  const [exporting, setExporting] = useState(false);
+  const rpcFilters = {
+    sexo: selectedSexo === "all" ? null : selectedSexo,
+    faixa_etaria: selectedFaixaEtaria === "all" ? null : FAIXAS[selectedFaixaEtaria],
+    status: selectedStatus === "all" ? null : selectedStatus,
+    evolucao: selectedEvolucao === "all" ? null : selectedEvolucao,
+    se_inicio: seInicio || null,
+    se_fim: seFim || null,
+  };
+  const resumoQuery = useQuery({
+    queryKey: ["painel-resumo", selectedAgravo, selectedMunicipio, rpcFilters],
+    queryFn: async (): Promise<PainelResumo> => {
+      const { data, error } = await supabase.rpc("painel_resumo", {
+        p_agravo: selectedAgravo,
+        p_inicio: undefined,
+        p_fim: undefined,
+        p_municipio: selectedMunicipio === "all" ? undefined : selectedMunicipio,
+        p_filtros: rpcFilters,
+      });
+      if (error) throw error;
+      return data as unknown as PainelResumo;
+    },
+    staleTime: 60_000,
+    enabled: hasAgravoSelected(selectedAgravo),
+  });
+  const resumo = hasAgravoSelected(selectedAgravo) ? resumoQuery.data : undefined;
+  const isLoading = hasAgravoSelected(selectedAgravo) && resumoQuery.isLoading;
+  useEffect(() => {
+    if (resumoQuery.error) toast.error("Não foi possível carregar o resumo do painel. Tente novamente.");
+  }, [resumoQuery.error]);
 
   // Telemetry: log every select/clear + which agravo query fires and which
   // tab was active at that moment. Fires only on transitions so we don't
@@ -426,9 +441,9 @@ function PainelPage() {
 
 
 
-  const byEvolucao = useMemo(() => {
-    if (selectedEvolucao === "all") return byAgravo;
-    return byAgravo.filter((c) => {
+  const filterExportRows = (rows: CaseRow[]): CaseRow[] => {
+    const byEvolucao = rows.filter((c) => {
+      if (selectedEvolucao === "all") return true;
       const ev = String(c.evolucao || c.evolucao_caso || "").toLowerCase();
       if (selectedEvolucao === "alta")
         return ev.includes("alta") || ev === "cura" || ev === "alta_cura";
@@ -439,9 +454,6 @@ function PainelPage() {
         return ev === "" || ev.includes("investigacao");
       return true;
     });
-  }, [byAgravo, selectedEvolucao]);
-
-  const filtered = useMemo(() => {
     let result = byEvolucao;
 
     if (selectedSexo !== "all") {
@@ -505,100 +517,22 @@ function PainelPage() {
         return false;
       }
     });
-  }, [byEvolucao, selectedSexo, selectedFaixaEtaria, selectedMunicipio, selectedStatus, seInicio, seFim]);
-
-  const uniqueMunicipios = useMemo(() => {
-    const list = allCases
-      .map((c) => (c.municipio_notificacao as string) || "")
-      .filter((m) => m !== "");
-    return Array.from(new Set(list)).sort((a, b) => a.localeCompare(b));
-  }, [allCases]);
-
-  const total = filtered.length;
-  const isConfirmed = (c: CaseRow) =>
-    c.classificacao_caso === "confirmado" ||
-    c.classificacao_final === "confirmado";
-  const confirmados = filtered.filter(isConfirmed);
-  const encerrados = filtered.filter((c) => c.status === "encerrado");
-  const emInvestigacao = filtered.filter((c) => c.status === "em_investigacao");
-
-  const obitosConf = confirmados.filter(
-    (c) =>
-      String(c.evolucao_caso || c.evolucao || "").toLowerCase().includes("obito") ||
-      !!c.data_obito
-  );
-
-  const letalidade =
-    confirmados.length > 0
-      ? ((obitosConf.length / confirmados.length) * 100).toFixed(1)
-      : "0";
-
-  // Data quality completeness checker
-  const dataQualityScore = useMemo(() => {
-    if (filtered.length === 0) return 100;
-    const fieldsToCheck = [
-      "sexo",
-      "idade",
-      "raca_cor",
-      "uf_residencia",
-      "municipio_residencia",
-      "logradouro",
-      "bairro",
-      "data_nascimento",
-      "semana_epidemiologica"
-    ];
-    let totalChecks = 0;
-    let filledChecks = 0;
-
-    filtered.forEach((c) => {
-      fieldsToCheck.forEach((f) => {
-        totalChecks++;
-        const val = c[f];
-        if (
-          val !== null &&
-          val !== undefined &&
-          String(val).trim() !== "" &&
-          String(val).toLowerCase() !== "ignorado"
-        ) {
-          filledChecks++;
-        }
-      });
-    });
-
-    return Math.round((filledChecks / totalChecks) * 100);
-  }, [filtered]);
-
-  // Average time of investigation in days
-  const averageTimeDays = useMemo(() => {
-    let count = 0;
-    let sumMs = 0;
-
-    filtered.forEach((c) => {
-      const start = c.data_notificacao ? new Date(c.data_notificacao as string) : null;
-      const end = c.data_investigacao ? new Date(c.data_investigacao as string) : null;
-
-      if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        const diff = end.getTime() - start.getTime();
-        if (diff >= 0) {
-          sumMs += diff;
-          count++;
-        }
-      }
-    });
-
-    if (count === 0) return 4.5; // realistic fallback if data empty
-    return Number((sumMs / (1000 * 60 * 60 * 24) / count).toFixed(1));
-  }, [filtered]);
+  };
+  const uniqueMunicipios = resumo?.municipios_opcoes ?? [];
+  const total = resumo?.totais.notificados ?? 0;
+  const confirmados = { length: resumo?.totais.confirmados ?? 0 };
+  const encerrados = { length: resumo?.totais.encerrados ?? 0 };
+  const emInvestigacao = { length: resumo?.totais.em_aberto ?? 0 };
+  const obitosConf = { length: resumo?.totais.obitos_confirmados ?? 0 };
+  const letalidade = (resumo?.totais.letalidade ?? 0).toFixed(1);
+  const dataQualityScore = resumo?.qualidade ?? 100;
+  const averageTimeDays = resumo?.totais.media_investigacao ?? 4.5;
+  const daily = resumo?.serie_diaria ?? [];
 
   const trendAnalysis = useMemo(() => {
-    if (filtered.length === 0) return { percent: 0, direction: "up" as const, isZero: true };
+    if (total === 0) return { percent: 0, direction: "up" as const, isZero: true };
 
-    const dates = filtered
-      .map((c) => {
-        const dt = (c.data_notificacao as string) || (c.data_preenchimento as string);
-        return dt ? new Date(dt).getTime() : null;
-      })
-      .filter((t): t is number => t !== null && !isNaN(t));
+    const dates = daily.map((c) => new Date(c.data).getTime()).filter(Number.isFinite);
 
     if (dates.length === 0) return { percent: 0, direction: "up" as const, isZero: true };
 
@@ -617,8 +551,8 @@ function PainelPage() {
       startOfPeriod = minTime;
     }
 
-    const firstHalfCount = dates.filter((t) => t >= startOfPeriod && t < cutoff).length;
-    const secondHalfCount = dates.filter((t) => t >= cutoff).length;
+    const firstHalfCount = daily.reduce((n, c) => { const t = new Date(c.data).getTime(); return n + (t >= startOfPeriod && t < cutoff ? c.notificados : 0); }, 0);
+    const secondHalfCount = daily.reduce((n, c) => n + (new Date(c.data).getTime() >= cutoff ? c.notificados : 0), 0);
 
     if (firstHalfCount === 0) {
       if (secondHalfCount === 0) return { percent: 0, direction: "up" as const, isZero: true };
@@ -631,11 +565,11 @@ function PainelPage() {
       direction: change >= 0 ? ("up" as const) : ("down" as const),
       isZero: false,
     };
-  }, [filtered]);
+  }, [resumo]);
 
   // Active status situation
   const situationStatus = useMemo(() => {
-    if (trendAnalysis.isZero || filtered.length === 0) {
+    if (trendAnalysis.isZero || total === 0) {
       return {
         label: "Controlado",
         description: "Situação epidemiológica estável sem oscilações significativas na transmissão.",
@@ -669,32 +603,13 @@ function PainelPage() {
       class: "border-emerald-500/20 bg-emerald-500/5 text-emerald-600",
       dotClass: "bg-emerald-500",
     };
-  }, [trendAnalysis, filtered, alertThreshold]);
+  }, [trendAnalysis, resumo, alertThreshold]);
 
-  const topMunicipios = useMemo(() => {
-    const counts: Record<string, number> = {};
-    confirmados.forEach((c) => {
-      const m = (c.municipio_notificacao as string) || "Desconhecido";
-      counts[m] = (counts[m] || 0) + 1;
-    });
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name, count]) => ({
-        name,
-        count,
-        percentage: confirmados.length > 0 ? ((count / confirmados.length) * 100).toFixed(1) : "0",
-      }));
-  }, [confirmados]);
+  const topMunicipios = (resumo?.ranking_municipios ?? []).filter((m) => m.confirmados > 0).slice(0, 3).map((m) => ({ name: m.municipio, count: m.confirmados, percentage: confirmados.length ? ((m.confirmados / confirmados.length) * 100).toFixed(1) : "0" }));
 
   // Municipalities alerts
   const municipiosAumentando = useMemo(() => {
-    const dates = filtered
-      .map((c) => {
-        const dt = (c.data_notificacao as string) || (c.data_preenchimento as string);
-        return dt ? new Date(dt).getTime() : null;
-      })
-      .filter((t): t is number => t !== null && !isNaN(t));
+    const dates = daily.map((c) => new Date(c.data).getTime()).filter(Number.isFinite);
 
     if (dates.length === 0) return [];
 
@@ -708,16 +623,14 @@ function PainelPage() {
     const countsRecent: Record<string, number> = {};
     const countsPast: Record<string, number> = {};
 
-    filtered.forEach((c) => {
-      const dt = (c.data_notificacao as string) || (c.data_preenchimento as string);
-      if (!dt) return;
-      const t = new Date(dt).getTime();
-      const mun = (c.municipio_notificacao as string) || "Desconhecido";
+    daily.forEach((c) => {
+      const t = new Date(c.data).getTime();
+      const mun = c.municipio;
 
       if (t >= limitRecent && t <= maxTime) {
-        countsRecent[mun] = (countsRecent[mun] || 0) + 1;
+        countsRecent[mun] = (countsRecent[mun] || 0) + c.notificados;
       } else if (t >= limitPast && t < limitRecent) {
-        countsPast[mun] = (countsPast[mun] || 0) + 1;
+        countsPast[mun] = (countsPast[mun] || 0) + c.notificados;
       }
     });
 
@@ -733,7 +646,7 @@ function PainelPage() {
     });
 
     return increasing.sort((a, b) => b.recent - a.recent).slice(0, 8);
-  }, [filtered]);
+  }, [resumo]);
 
   // Alertas List
   const activeAlerts = useMemo(() => {
@@ -790,184 +703,34 @@ function PainelPage() {
     return list;
   }, [obitosConf, trendAnalysis, emInvestigacao, municipiosAumentando, alertThreshold]);
 
-  // Semana Epidemiológica counts
-  const seCounts: Record<number, number> = {};
-  const seConfirmCounts: Record<number, number> = {};
-  filtered.forEach((c) => {
-    const dt = (c.data_notificacao as string) || (c.data_preenchimento as string);
-    if (!dt) return;
-    try {
-      const se = getSeNumber(new Date(dt));
-      seCounts[se] = (seCounts[se] || 0) + 1;
-      if (isConfirmed(c)) seConfirmCounts[se] = (seConfirmCounts[se] || 0) + 1;
-    } catch {}
-  });
-
-  const seBarData = Object.entries(seCounts)
-    .sort(([a], [b]) => Number(a) - Number(b))
-    .map(([se, count]) => ({
-      se: `SE ${String(se).padStart(2, "0")}`,
-      count,
-      confirmados: seConfirmCounts[Number(se)] || 0,
-    }));
-
-  // Demographic / Epidemiologic breaking calculations
-  const sexoCounts = { Masculino: 0, Feminino: 0, Ignorado: 0 };
-  confirmados.forEach((c) => {
-    const s = String(c.sexo || "").toLowerCase();
-    if (s === "masculino" || s === "m") sexoCounts.Masculino++;
-    else if (s === "feminino" || s === "f") sexoCounts.Feminino++;
-    else sexoCounts.Ignorado++;
-  });
-  const sexoData = Object.entries(sexoCounts)
-    .filter(([, v]) => v > 0)
-    .map(([name, value]) => ({ name, value }));
-
+  const seBarData = (resumo?.serie_semanal ?? []).map((s) => ({ se: `SE ${String(s.se).padStart(2, "0")}`, count: s.notificados, confirmados: s.confirmados }));
+  const sexoData = (resumo?.distribuicoes.sexo ?? []).map((d) => ({ name: d.valor, value: d.quantidade }));
   const regionalMacroData = useMemo(() => {
     const counts: Record<string, number> = {};
-
-    filtered.forEach((c) => {
-      const municipio = String(c.municipio_residencia || "");
-      const derived = getRegionalAndMacro(municipio);
+    (resumo?.regionais ?? []).forEach((c) => {
+      const derived = getRegionalAndMacro(c.municipio || "");
       const regional = String(c.regional || derived.regional || "Não informado").trim() || "Não informado";
-      const macroregional = String(c.macroregiao || c.macroregional || derived.macroregiao || "Não informado").trim() || "Não informado";
+      const macroregional = String(c.macroregiao || derived.macroregiao || "Não informado").trim() || "Não informado";
       const name = `${regional} / ${macroregional}`;
-      counts[name] = (counts[name] || 0) + 1;
+      counts[name] = (counts[name] || 0) + c.quantidade;
     });
-
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }));
-  }, [filtered]);
-
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+  }, [resumo]);
   const regionalMacroTotal = regionalMacroData.reduce((sum, item) => sum + item.value, 0);
-
-  const regionalResponseTime = useMemo(() => {
-    const byRegional = new Map<string, { totalDays: number; count: number }>();
-    let invertedDatesCount = 0;
-
-    filtered.forEach((c) => {
-      if (!c.data_notificacao || !c.data_encerramento) return;
-
-      const start = new Date(c.data_notificacao as string);
-      const end = new Date(c.data_encerramento as string);
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
-
-      const days = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-      if (days < 0) {
-        invertedDatesCount += 1;
-        return;
-      }
-
-      const rawRegional = String(c.regional || "").trim();
-      const regional = !rawRegional || rawRegional === "-" ? "Não informado" : rawRegional;
-      const current = byRegional.get(regional) ?? { totalDays: 0, count: 0 };
-      current.totalDays += days;
-      current.count += 1;
-      byRegional.set(regional, current);
-    });
-
-    const averages = Array.from(byRegional, ([regional, values]) => ({
-      regional,
-      averageDays: values.totalDays / values.count,
-      count: values.count,
-    })).sort((a, b) => a.averageDays - b.averageDays || a.regional.localeCompare(b.regional, "pt-BR"));
-
-    return {
-      fastest: averages[0] ?? null,
-      slowest: averages[averages.length - 1] ?? null,
-      invertedDatesCount,
-    };
-  }, [filtered]);
-
-  const racaLabels: Record<string, string> = {
-    branca: "Branca",
-    preta: "Preta",
-    amarela: "Amarela",
-    parda: "Parda",
-    indigena: "Indígena",
-    ignorado: "Ignorado",
+  const regionalResponseTime = {
+    fastest: resumo?.tempos_regionais[0] ?? null,
+    slowest: resumo?.tempos_regionais.at(-1) ?? null,
+    invertedDatesCount: resumo?.datas_invertidas ?? 0,
   };
-  const racaCounts: Record<string, number> = {};
-  confirmados.forEach((c) => {
-    const r = String(c.raca_cor || "ignorado");
-    const label = racaLabels[r] || r;
-    racaCounts[label] = (racaCounts[label] || 0) + 1;
-  });
-  const racaData = Object.entries(racaCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, value]) => ({ name, value }));
-
-  // Critérios de Confirmação — mapeamento canônico compartilhado
-  // (chaves/ordem fixas para TODOS os agravos; validado em runtime e em testes)
-  const criterioData = useMemo(() => {
-    // Descartados não entram no gráfico de Critérios de Confirmação.
-    const relevantes = (filtered as Array<{ status?: string | null; criterio_confirmacao?: string | null; classificacao_caso?: string | null }>)
-      .filter((r) => String(r.classificacao_caso ?? "").toLowerCase() !== "descartado");
-    const data = buildCriterioData(relevantes);
-    if (import.meta.env.DEV) assertCriterioOrder(data);
-    return data;
-  }, [filtered]);
-
-  // Faixa Etária counts
-  const faixaCounts: Record<string, number> = {
-    "< 1 ano": 0,
-    "1 a 10 anos": 0,
-    "11 a 20 anos": 0,
-    "21 a 30 anos": 0,
-    "31 a 40 anos": 0,
-    "41 a 50 anos": 0,
-    "51 a 60 anos": 0,
-    "61 a 70 anos": 0,
-    "Acima de 70 anos": 0,
-  };
-  confirmados.forEach((c) => {
-    const nasc = c.data_nascimento as string | undefined;
-    const notif = (c.data_notificacao as string) || (c.data_preenchimento as string);
-    if (!nasc || !notif) return;
-    const idade = Math.floor(
-      (new Date(notif).getTime() - new Date(nasc).getTime()) /
-        (365.25 * 24 * 3600 * 1000)
-    );
-    if (idade < 1) faixaCounts["< 1 ano"]++;
-    else if (idade <= 10) faixaCounts["1 a 10 anos"]++;
-    else if (idade <= 20) faixaCounts["11 a 20 anos"]++;
-    else if (idade <= 30) faixaCounts["21 a 30 anos"]++;
-    else if (idade <= 40) faixaCounts["31 a 40 anos"]++;
-    else if (idade <= 50) faixaCounts["41 a 50 anos"]++;
-    else if (idade <= 60) faixaCounts["51 a 60 anos"]++;
-    else if (idade <= 70) faixaCounts["61 a 70 anos"]++;
-    else faixaCounts["Acima de 70 anos"]++;
-  });
-  const faixaData = Object.entries(faixaCounts).map(([name, value]) => ({
-    name,
-    value,
-  }));
-
-  // Cases per Month
+  const racaLabels: Record<string, string> = { branca: "Branca", preta: "Preta", amarela: "Amarela", parda: "Parda", indigena: "Indígena", ignorado: "Ignorado" };
+  const racaData = (resumo?.distribuicoes.raca_cor ?? []).map((d) => ({ name: racaLabels[d.valor] || d.valor, value: d.quantidade })).sort((a, b) => b.value - a.value);
+  const criterioData: Array<[string, number]> = CRITERIO_CONFIRMACAO_KEYS.map((key) => [key, resumo?.distribuicoes.criterio.find((d) => d.valor === key)?.quantidade ?? 0]);
+  const faixaData = Object.values(FAIXAS).map((name) => ({ name, value: resumo?.distribuicoes.faixa_etaria.find((d) => d.valor === name)?.quantidade ?? 0 }));
   const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const mesCounts: Record<string, number> = {};
-  const mesConfirmCounts: Record<string, number> = {};
-  filtered.forEach((c) => {
-    const dt = (c.data_notificacao as string) || (c.data_preenchimento as string);
-    if (!dt) return;
-    const d = new Date(dt);
-    if (isNaN(d.getTime())) return;
-    const key = `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
-    mesCounts[key] = (mesCounts[key] || 0) + 1;
-    if (isConfirmed(c)) mesConfirmCounts[key] = (mesConfirmCounts[key] || 0) + 1;
-  });
-  const mesData = Object.entries(mesCounts)
-    .sort(([a], [b]) => {
-      const [ma, ya] = a.split("/");
-      const [mb, yb] = b.split("/");
-      return Number(ya) * 12 + MESES.indexOf(ma) - (Number(yb) * 12 + MESES.indexOf(mb));
-    })
-    .map(([mes, notif]) => ({
-      mes,
-      notificados: notif,
-      confirmados: mesConfirmCounts[mes] || 0,
-    }));
+  const mesData = (resumo?.serie_mensal ?? []).map((d) => ({ mes: `${MESES[Number(d.mes.slice(5)) - 1]}/${d.mes.slice(2,4)}`, notificados: d.notificados, confirmados: d.confirmados }));
+  // Compatibility adapter for the unchanged map: anonymous municipality/count
+  // aggregates only. No patient records are loaded to display the map.
+  const mapCases = useMemo(() => (resumo?.ranking_municipios ?? []).flatMap((m) => Array.from({ length: mapMetric === "confirmados" ? m.confirmados : m.notificados }, () => ({ municipio_notificacao: m.municipio, classificacao_caso: "confirmado" }))), [resumo, mapMetric]);
 
   // Active filters check
   const anyFilter =
@@ -1000,11 +763,33 @@ function PainelPage() {
 
 
   // CSV Export helper
-  const handleExportCSV = () => {
-    if (filtered.length === 0) {
+  const fetchExportRows = async (): Promise<CaseRow[]> => {
+    const agravo = AGRAVOS.find((a) => a.key === selectedAgravo);
+    if (!agravo) return [];
+    const rows: CaseRow[] = [];
+    const cutoff = new Date().toISOString();
+    for (let offset = 0; ; offset += 1000) {
+      let query = (supabase as any).from(agravo.table).select("*").lte("created_at", cutoff).order("created_at", { ascending: false }).order("id", { ascending: true });
+      if (selectedMunicipio !== "all") query = query.eq("municipio_notificacao", selectedMunicipio);
+      if (selectedStatus !== "all") query = query.eq("status", selectedStatus);
+      const { data, error } = await query.range(offset, offset + 999);
+      if (error) throw error;
+      const page = (data ?? []) as Record<string, unknown>[];
+      rows.push(...filterExportRows(page.map((r) => ({ ...r, _tipo: agravo.key }))));
+      if (page.length < 1000) break;
+    }
+    return rows;
+  };
+  const handleExportCSV = async () => {
+    if (total === 0) {
       toast.error("Nenhum registro encontrado para exportação.");
       return;
     }
+    if (exporting) return;
+    setExporting(true);
+    try {
+    const filtered = await fetchExportRows();
+    if (!filtered.length) { toast.error("Nenhum registro encontrado para exportação."); return; }
     const headers = [
       "ID",
       "Nº da Notificação",
@@ -1044,6 +829,8 @@ function PainelPage() {
     link.click();
     document.body.removeChild(link);
     toast.success("CSV exportado com sucesso!");
+    } catch { toast.error("Falha ao buscar as fichas para exportação. Tente novamente."); }
+    finally { setExporting(false); }
   };
 
   // AI Chat helper
@@ -1091,35 +878,11 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
   };
 
   // Municipalities tab calculated list
-  const filteredMunicipiosList = useMemo(() => {
-    const list: Record<string, { notificados: number; confirmados: number; investigacao: number; obitos: number }> = {};
-    filtered.forEach((c) => {
-      const m = (c.municipio_notificacao as string) || "Desconhecido";
-      if (!list[m]) {
-        list[m] = { notificados: 0, confirmados: 0, investigacao: 0, obitos: 0 };
-      }
-      list[m].notificados++;
-      if (isConfirmed(c)) list[m].confirmados++;
-      if (c.status === "em_investigacao") list[m].investigacao++;
-      if (isConfirmed(c) && (String(c.evolucao_caso || c.evolucao || "").toLowerCase().includes("obito") || !!c.data_obito)) {
-        list[m].obitos++;
-      }
-    });
-
-    return Object.entries(list)
-      .map(([name, stats]) => {
-        const letal = stats.confirmados > 0 ? ((stats.obitos / stats.confirmados) * 100).toFixed(1) : "0.0";
-        // Estimate incidence rate (mocked population for high visual fidelity)
-        const estIncidence = stats.confirmados > 0 ? ((stats.confirmados / 120_000) * 100_000).toFixed(1) : "0.0";
-        return {
-          name,
-          ...stats,
-          letalidade: letal,
-          incidencia: estIncidence,
-        };
-      })
-      .sort((a, b) => b.confirmados - a.confirmados);
-  }, [filtered]);
+  const filteredMunicipiosList = (resumo?.ranking_municipios ?? []).map((m) => ({
+    name: m.municipio, notificados: m.notificados, confirmados: m.confirmados, investigacao: m.investigacao, obitos: m.obitos,
+    letalidade: m.confirmados ? ((m.obitos / m.confirmados) * 100).toFixed(1) : "0.0",
+    incidencia: m.confirmados ? ((m.confirmados / 120_000) * 100_000).toFixed(1) : "0.0",
+  }));
 
   const [municipioSearch, setMunicipioSearch] = useState("");
   const displayedMunicipios = useMemo(() => {
@@ -1831,7 +1594,7 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                     </div>
                   }>
                     <SmartMap
-                      filteredCases={filtered}
+                      filteredCases={mapCases}
                       heatmapMode={heatmapMode}
                       metric={mapMetric}
                     />
@@ -2171,7 +1934,7 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                       Baixe os registros de fichas notificadas que atendem aos filtros ativos da barra superior do painel de monitoramento.
                     </p>
                   </div>
-                  <Button onClick={handleExportCSV} className="gap-2 h-9 tech-gradient text-white hover:opacity-90 w-full mt-4 border-0">
+                  <Button disabled={exporting} onClick={handleExportCSV} className="gap-2 h-9 tech-gradient text-white hover:opacity-90 w-full mt-4 border-0">
                     <Download className="w-4 h-4" /> Exportar Dados de Fichas
                   </Button>
                 </Card>
@@ -2184,7 +1947,12 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                     </p>
                   </div>
                   <Button
-                    onClick={() => {
+                    disabled={exporting}
+                    onClick={async () => {
+                      if (exporting) return;
+                      setExporting(true);
+                      try {
+                      const filtered = await fetchExportRows();
                       const incomplete = filtered.filter(
                         (c) =>
                           !c.sexo ||
@@ -2219,6 +1987,8 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                       link.click();
                       document.body.removeChild(link);
                       toast.success("Relatório de inconsistências baixado!");
+                      } catch { toast.error("Falha ao buscar as fichas para exportação."); }
+                      finally { setExporting(false); }
                     }}
                     variant="outline"
                     className="gap-2 h-9 bg-card border-border/80 text-foreground w-full mt-4"
