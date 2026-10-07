@@ -3373,7 +3373,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_notificacoes: {
+        Row: {
+          agravo: string | null
+          classificacao: string | null
+          created_at: string | null
+          criterio: string | null
+          data_notificacao: string | null
+          data_primeiros_sintomas: string | null
+          evolucao: string | null
+          faixa_etaria: string | null
+          id: string | null
+          macrorregiao: string | null
+          municipio_residencia: string | null
+          municipio_residencia_codigo_ibge: string | null
+          numero_notificacao: string | null
+          raca_cor: string | null
+          regional: string | null
+          semana_epidemiologica: number | null
+          sexo: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
@@ -3400,6 +3422,15 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      painel_resumo: {
+        Args: {
+          p_agravo?: string
+          p_fim?: string
+          p_inicio?: string
+          p_municipio?: string
+        }
+        Returns: Json
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
