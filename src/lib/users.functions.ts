@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { UserTerritorioSchema } from "@/lib/user-territorio";
 
 const RoleEnum = z.enum(["admin", "gestor", "user"]);
 type Role = z.infer<typeof RoleEnum>;
@@ -10,6 +11,7 @@ const CreateUserSchema = z.object({
   email: z.string().trim().email().max(255),
   cargo: z.string().trim().max(150).optional().nullable(),
   role: RoleEnum,
+  territorio: UserTerritorioSchema.optional(),
 });
 
 function generateStrongPassword(): string {
@@ -40,6 +42,7 @@ const UpdateUserSchema = z.object({
   email: z.string().trim().email().max(255),
   cargo: z.string().trim().max(150).optional().nullable(),
   role: RoleEnum,
+  territorio: UserTerritorioSchema.optional(),
 });
 
 const ToggleBlockSchema = z.object({
@@ -136,6 +139,9 @@ export const createUser = createServerFn({ method: "POST" })
       context.userId,
       data.role,
     );
+    if (data.territorio && actorTop !== "admin") {
+      throw new Error("Apenas administradores podem alterar territórios.");
+    }
 
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
@@ -178,6 +184,14 @@ export const createUser = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: newId, role: data.role });
     if (rErr) throw new Error(rErr.message);
+
+    if (data.territorio) {
+      const { error } = await supabaseAdmin.from("user_territorios").insert({ user_id: newId, ...data.territorio });
+      if (error) {
+        await supabaseAdmin.auth.admin.deleteUser(newId);
+        throw new Error("Não foi possível salvar o território. O cadastro foi cancelado.");
+      }
+    }
 
     const actor = {
       id: context.userId,
@@ -271,6 +285,9 @@ export const updateUser = createServerFn({ method: "POST" })
     if (currentTop !== data.role) {
       await ensureCanManage(context.supabase, context.userId, data.role, data.id);
     }
+    if (data.territorio && actorTop !== "admin") {
+      throw new Error("Apenas administradores podem alterar territórios.");
+    }
 
     // Bloqueia rebaixar o último admin.
     if (currentTop === "admin" && data.role !== "admin") {
@@ -283,6 +300,13 @@ export const updateUser = createServerFn({ method: "POST" })
           "Operação negada: é necessário pelo menos 1 administrador no sistema.",
         );
       }
+    }
+
+    if (data.territorio) {
+      const { error } = await supabaseAdmin.from("user_territorios").upsert(
+        { user_id: data.id, ...data.territorio }, { onConflict: "user_id" },
+      );
+      if (error) throw new Error("Não foi possível salvar o território do usuário.");
     }
 
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(
@@ -321,6 +345,18 @@ export const updateUser = createServerFn({ method: "POST" })
     );
 
     return { id: data.id };
+  });
+
+// A administração precisa ler os territórios de outros usuários sem ampliar a RLS de leitura própria.
+export const listUserTerritorios = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const roles = await getActorRoles(context.supabase, context.userId);
+    if (!roles.includes("admin")) throw new Error("Sem permissão para consultar territórios de outros usuários.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.from("user_territorios").select("user_id, nivel, regional, municipio_ibge");
+    if (error) throw new Error("Não foi possível carregar os territórios.");
+    return data ?? [];
   });
 
 /**
