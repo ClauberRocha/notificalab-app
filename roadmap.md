@@ -6,3 +6,4 @@
 - [x] Validar tipos, build e instalação.
 - [x] Engrossar a rosca do gráfico de gênero e mostrar a quantidade de casos sob o percentual.
 - [x] Adicionar gráfico de distribuição por Regional e Macroregional com os filtros atuais.
+- [x] Criar e validar vw_notificacoes e painel_resumo, preservando RLS e sem alterar o front-end.
