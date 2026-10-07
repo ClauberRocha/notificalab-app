@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Reporting uses `public.vw_notificacoes` with `security_invoker` and the `SECURITY INVOKER` RPC `public.painel_resumo`; both preserve source-table RLS and expose only the reporting column allowlist to authenticated users.
