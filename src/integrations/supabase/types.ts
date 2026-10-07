@@ -3423,15 +3423,26 @@ export type Database = {
         }
         Returns: number
       }
-      painel_resumo: {
-        Args: {
-          p_agravo?: string
-          p_fim?: string
-          p_inicio?: string
-          p_municipio?: string
-        }
-        Returns: Json
-      }
+      painel_resumo:
+        | {
+            Args: {
+              p_agravo?: string
+              p_fim?: string
+              p_inicio?: string
+              p_municipio?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_agravo: string
+              p_filtros: Json
+              p_fim: string
+              p_inicio: string
+              p_municipio: string
+            }
+            Returns: Json
+          }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

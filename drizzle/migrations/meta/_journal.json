@@ -8,6 +8,13 @@
       "when": 1791381859649,
       "tag": "0000_vw_notificacoes_painel_resumo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791382583953,
+      "tag": "0001_painel_resumo_filtros_agregados",
+      "breakpoints": true
     }
   ]
 }
