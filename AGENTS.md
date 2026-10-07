@@ -11,3 +11,4 @@
 
 - Reporting uses `public.vw_notificacoes` with `security_invoker` and the `SECURITY INVOKER` RPC `public.painel_resumo`; both preserve source-table RLS and expose only the reporting column allowlist to authenticated users.
 - The panel uses the five-argument `painel_resumo` overload for aggregate-only reads; nominal exports fetch source rows on click in stable 1000-row pages to avoid loading patient data for charts.
+- Panel alert preferences are stored together under the `alertas` key in `painel_config`; RLS enforces admin-only writes and a trigger stamps actor/time, while the latest-import RPC exposes only a timestamp without widening access to audit logs.

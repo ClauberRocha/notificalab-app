@@ -53,7 +53,7 @@ const groups: SidebarGroup[] = [
       { title: "Indicadores", url: "/painel?tab=indicadores", icon: Activity },
       { title: "Municípios", url: "/painel?tab=municipios", icon: Building },
       { title: "Relatórios", url: "/painel?tab=relatorios", icon: FileText },
-      { title: "Assistente IA", url: "/painel?tab=ia", icon: Bot },
+      { title: "Resumo automático", url: "/painel?tab=ia", icon: Bot },
     ],
   },
   {

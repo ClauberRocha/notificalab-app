@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   FilePlus,
   Activity,
@@ -348,15 +349,70 @@ function PainelPage() {
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     {
       sender: "ai",
-      text: "Olá! Sou o Assistente IA do Notifica-MA Intelligence. Posso ajudar fornecendo resumos epidemiológicos, identificando áreas de risco ou explicando os critérios de confirmação dos agravos. O que gostaria de analisar hoje?"
+      text: "Resumo automático dos dados filtrados. Qual resumo deseja consultar?"
     }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
 
   // Config State
-  const [alertThreshold, setAlertThreshold] = useState("20");
-  const [enableEmails, setEnableEmails] = useState(true);
+  const [thresholdDraft, setAlertThreshold] = useState<string>();
+  const [emailsDraft, setEnableEmails] = useState<boolean>();
+  const [savingConfig, setSavingConfig] = useState(false);
+  const configQuery = useQuery({
+    queryKey: ["painel-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("painel_config").select("valor").eq("chave", "alertas").maybeSingle();
+      if (error) throw error;
+      const value = data?.valor;
+      const config = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+      return {
+        threshold: typeof config.gatilho_alerta === "number" ? config.gatilho_alerta : 20,
+        emails: typeof config.notificar_gestores_email === "boolean" ? config.notificar_gestores_email : true,
+      };
+    },
+  });
+  const alertThreshold = thresholdDraft ?? String(configQuery.data?.threshold ?? 20);
+  const enableEmails = emailsDraft ?? configQuery.data?.emails ?? true;
+  const savePanelConfig = async () => {
+    const threshold = Number(alertThreshold);
+    if (!alertThreshold.trim() || !Number.isFinite(threshold) || threshold < 0 || threshold > 100) {
+      toast.error("Informe um gatilho de alerta entre 0 e 100%.");
+      return;
+    }
+    setSavingConfig(true);
+    try {
+      const { error } = await supabase.from("painel_config").upsert({
+        chave: "alertas",
+        valor: { gatilho_alerta: threshold, notificar_gestores_email: enableEmails },
+      }, { onConflict: "chave" });
+      if (error) throw error;
+      await configQuery.refetch();
+      setAlertThreshold(undefined);
+      setEnableEmails(undefined);
+      toast.success("Configurações do painel salvas com sucesso!");
+    } catch {
+      toast.error("Não foi possível salvar as configurações. Apenas administradores podem alterá-las.");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+  const lastImportQuery = useQuery({
+    queryKey: ["painel-ultima-importacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("painel_ultima_importacao");
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+  const lastImportDescription = lastImportQuery.isError
+    ? "Não foi possível consultar a última importação"
+    : lastImportQuery.isPending
+      ? "Consultando última importação..."
+      : lastImportQuery.data
+        ? `Última importação registrada: ${new Date(lastImportQuery.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília)`
+        : "Nenhuma importação registrada";
 
 
   const [exporting, setExporting] = useState(false);
@@ -697,12 +753,12 @@ function PainelPage() {
       id: "alert-info",
       type: "info",
       title: "Sistema Integrado",
-      description: "Auditoria automática de sincronização de planilhas e importador CSV funcionando normalmente.",
+      description: lastImportDescription,
       icon: CheckCircle,
-      badge: "Normal"
+      badge: "Histórico"
     });
     return list;
-  }, [obitosConf, trendAnalysis, emInvestigacao, municipiosAumentando, alertThreshold]);
+  }, [obitosConf, trendAnalysis, emInvestigacao, municipiosAumentando, alertThreshold, lastImportDescription]);
 
   const seBarData = (resumo?.serie_semanal ?? []).map((s) => ({ se: `SE ${String(s.se).padStart(2, "0")}`, count: s.notificados, confirmados: s.confirmados }));
   const sexoData = (resumo?.distribuicoes.sexo ?? []).map((d) => ({ name: d.valor, value: d.quantidade }));
@@ -1061,7 +1117,7 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
           { id: "indicadores", label: "Indicadores", icon: Activity },
           { id: "municipios", label: "Municípios", icon: Building },
           { id: "relatorios", label: "Relatórios & Boletins", icon: FileText },
-          { id: "ia", label: "Assistente IA", icon: Bot },
+          { id: "ia", label: "Resumo automático", icon: Bot },
           { id: "config", label: "Configurações", icon: Settings },
         ].map((t) => {
           const Icon = t.icon;
@@ -2045,8 +2101,8 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                 <CardHeader className="py-3 border-b border-border/30 bg-card/45 flex flex-row items-center gap-2">
                   <Bot className="w-5 h-5 text-primary" />
                   <div>
-                    <CardTitle className="text-xs uppercase font-bold text-foreground">Analista Epidemiológico IA</CardTitle>
-                    <p className="text-[9px] text-muted-foreground">Perguntas com dados em tempo real</p>
+                    <CardTitle className="text-xs uppercase font-bold text-foreground">Resumo automático</CardTitle>
+                    <p className="text-[9px] text-muted-foreground">Resumo gerado a partir dos dados filtrados</p>
                   </div>
                 </CardHeader>
 
@@ -2174,6 +2230,9 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                       <Label className="text-xs font-semibold text-foreground">Gatilho de Alerta de Tendência (%)</Label>
                       <Input
                         type="number"
+                        min={0}
+                        max={100}
+                        disabled={configQuery.isPending || configQuery.isError || savingConfig}
                         className="h-9 text-xs bg-background/50 border-border/80"
                         value={alertThreshold}
                         onChange={(e) => setAlertThreshold(e.target.value)}
@@ -2182,18 +2241,27 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                     </div>
 
                     <div className="flex items-center gap-3.5 pt-6 self-start">
-                      <input
-                        type="checkbox"
+                      <Switch
                         id="enable-emails"
-                        className="rounded border-border/70 text-primary bg-background/50 h-4 w-4"
+                        disabled={configQuery.isPending || configQuery.isError || savingConfig}
                         checked={enableEmails}
-                        onChange={(e) => setEnableEmails(e.target.checked)}
+                        onCheckedChange={setEnableEmails}
                       />
                       <Label htmlFor="enable-emails" className="text-xs font-semibold text-foreground cursor-pointer select-none">
                         Notificar gestores estaduais por e-mail em caso de surtos
                       </Label>
                     </div>
                   </div>
+                  {configQuery.isError && (
+                    <div role="alert" className="text-sm text-destructive">
+                      Não foi possível carregar as configurações.
+                      <Button variant="ghost" onClick={() => void configQuery.refetch()}>Tentar novamente</Button>
+                    </div>
+                  )}
+                  <Button onClick={savePanelConfig} disabled={configQuery.isPending || configQuery.isError || savingConfig} className="gap-2">
+                    {savingConfig ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {savingConfig ? "Salvando..." : "Salvar"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
