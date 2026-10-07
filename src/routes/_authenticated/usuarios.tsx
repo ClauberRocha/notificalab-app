@@ -1000,7 +1000,7 @@ function UserFormFields({
         next.regional = "";
         next.municipio_ibge = "";
       } else if (k === "regional") next.municipio_ibge = "";
-      if (touched[k]) setErrors(validateForm(next, canManageTerritorio));
+      if (touched[k] || Object.keys(errors).length > 0) setErrors(validateForm(next, canManageTerritorio));
       return next;
     });
   };
