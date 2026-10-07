@@ -1970,6 +1970,27 @@ export type Database = {
         }
         Relationships: []
       }
+      painel_config: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          valor: Json
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          valor?: Json
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           blocked: boolean
@@ -3443,6 +3464,7 @@ export type Database = {
             }
             Returns: Json
           }
+      painel_ultima_importacao: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

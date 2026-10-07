@@ -15,6 +15,13 @@
       "when": 1791382583953,
       "tag": "0001_painel_resumo_filtros_agregados",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791383295746,
+      "tag": "0002_painel_config_ultima_importacao",
+      "breakpoints": true
     }
   ]
 }
