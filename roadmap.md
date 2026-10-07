@@ -9,3 +9,5 @@
 - [x] Criar e validar vw_notificacoes e painel_resumo, preservando RLS e sem alterar o front-end.
 - [x] Usar painel_resumo com todos os filtros em /painel, preservando gráficos e abas.
 - [x] Carregar CSV nominal somente ao exportar, em páginas de 1000 registros, e validar.
+- [ ] Renomear Resumo automático e mostrar a última importação registrada no painel.
+- [ ] Persistir configurações do painel com leitura autenticada e escrita administrativa; validar.
