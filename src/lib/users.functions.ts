@@ -302,13 +302,6 @@ export const updateUser = createServerFn({ method: "POST" })
       }
     }
 
-    if (data.territorio) {
-      const { error } = await supabaseAdmin.from("user_territorios").upsert(
-        { user_id: data.id, ...data.territorio }, { onConflict: "user_id" },
-      );
-      if (error) throw new Error("Não foi possível salvar o território do usuário.");
-    }
-
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(
       data.id,
     );
@@ -330,11 +323,22 @@ export const updateUser = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (pErr) throw new Error(pErr.message);
 
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
-    const { error: rErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: data.id, role: data.role });
-    if (rErr) throw new Error(rErr.message);
+    if (currentTop !== data.role) {
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.id, role: data.role }, { onConflict: "user_id,role" });
+      if (rErr) throw new Error(rErr.message);
+      const { error: deleteError } = await supabaseAdmin.from("user_roles")
+        .delete().eq("user_id", data.id).neq("role", data.role);
+      if (deleteError) throw new Error(deleteError.message);
+    }
+
+    if (data.territorio) {
+      const { error } = await supabaseAdmin.from("user_territorios").upsert(
+        { user_id: data.id, ...data.territorio }, { onConflict: "user_id" },
+      );
+      if (error) throw new Error("Não foi possível salvar o território do usuário.");
+    }
 
     await audit(
       "update",
