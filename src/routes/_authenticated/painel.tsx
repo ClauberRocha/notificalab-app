@@ -2247,9 +2247,12 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                         checked={enableEmails}
                         onCheckedChange={setEnableEmails}
                       />
-                      <Label htmlFor="enable-emails" className="text-xs font-semibold text-foreground cursor-pointer select-none">
-                        Notificar gestores estaduais por e-mail em caso de surtos
-                      </Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="enable-emails" className="text-xs font-semibold text-foreground cursor-pointer select-none">
+                          Notificar gestores estaduais por e-mail em caso de surtos
+                        </Label>
+                        <p className="text-xs text-muted-foreground">O envio automático será ativado em uma próxima versão.</p>
+                      </div>
                     </div>
                   </div>
                   {configQuery.isError && (
