@@ -3392,6 +3392,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_territorios: {
+        Row: {
+          id: string
+          municipio_ibge: string | null
+          nivel: string
+          regional: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          municipio_ibge?: string | null
+          nivel: string
+          regional?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          municipio_ibge?: string | null
+          nivel?: string
+          regional?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_territorios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       vw_notificacoes: {
@@ -3465,6 +3497,7 @@ export type Database = {
             Returns: Json
           }
       painel_ultima_importacao: { Args: never; Returns: string }
+      pode_ver: { Args: { p_municipio_ibge: string }; Returns: boolean }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3472,6 +3505,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      territorio_regional: {
+        Args: { p_municipio_ibge: string }
+        Returns: string
       }
     }
     Enums: {
