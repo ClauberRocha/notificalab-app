@@ -56,6 +56,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { TERRITORIO_MUNICIPIOS, TERRITORIO_REGIONAIS } from "@/data/territorio-municipios";
+import { UserTerritorioSchema, type UserTerritorio } from "@/lib/user-territorio";
 import {
   createUser,
   updateUser,
@@ -64,10 +66,18 @@ import {
   setTemporaryPassword,
   resendTemporaryPassword,
   getSenderDnsStatus,
+  listUserTerritorios,
 } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
-  head: () => ({ meta: [{ title: "Usuários" }] }),
+  head: () => ({ meta: [
+    { title: "Usuários e territórios | Notifica-MA Lab" },
+    { name: "description", content: "Administração de usuários, perfis e territórios do Notifica-MA Lab." },
+    { property: "og:title", content: "Usuários e territórios | Notifica-MA Lab" },
+    { property: "og:description", content: "Administração de usuários, perfis e territórios do Notifica-MA Lab." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   beforeLoad: ({ context }) => {
     const role = (context as { role?: string }).role;
     if (role !== "admin" && role !== "gestor") {
@@ -106,6 +116,9 @@ type FormState = {
   email: string;
   cargo: string;
   role: Role;
+  nivel: UserTerritorio["nivel"] | "";
+  regional: string;
+  municipio_ibge: string;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -133,13 +146,31 @@ const FormSchema = z.object({
   }),
 });
 
-function validateForm(form: FormState): FormErrors {
+function territorioFromForm(form: FormState): UserTerritorio | undefined {
+  if (!form.nivel) return undefined;
+  return {
+    nivel: form.nivel,
+    regional: form.nivel === "estadual" ? null : form.regional || null,
+    municipio_ibge: form.nivel === "municipal" ? form.municipio_ibge || null : null,
+  };
+}
+
+function validateForm(form: FormState, canManageTerritorio = false): FormErrors {
   const result = FormSchema.safeParse(form);
-  if (result.success) return {};
   const errs: FormErrors = {};
-  for (const issue of result.error.issues) {
+  for (const issue of result.success ? [] : result.error.issues) {
     const key = issue.path[0] as keyof FormState;
     if (!errs[key]) errs[key] = issue.message;
+  }
+  if (canManageTerritorio) {
+    if (!form.nivel) errs.nivel = "Selecione um Nível.";
+    else {
+      const territory = UserTerritorioSchema.safeParse(territorioFromForm(form));
+      if (!territory.success) for (const issue of territory.error.issues) {
+        const key = issue.path[0] as keyof FormState;
+        if (!errs[key]) errs[key] = issue.message;
+      }
+    }
   }
   return errs;
 }
@@ -200,6 +231,12 @@ function UsuariosPage() {
     emailStatus: string;
   } | null>(null);
   const dnsStatusFn = useServerFn(getSenderDnsStatus);
+  const listTerritoriosFn = useServerFn(listUserTerritorios);
+  const territoriosQuery = useQuery({
+    queryKey: ["user-territorios", currentUserId],
+    queryFn: () => listTerritoriosFn(),
+    enabled: isAdmin,
+  });
   const { data: dnsStatus } = useQuery({
     queryKey: ["sender-dns-status"],
     queryFn: () => dnsStatusFn({ data: {} }),
@@ -251,6 +288,7 @@ function UsuariosPage() {
           email: form.email,
           cargo: form.cargo || null,
           role: form.role,
+          territorio: isAdmin ? territorioFromForm(form) : undefined,
         },
       }),
     onSuccess: (res) => {
@@ -340,11 +378,13 @@ function UsuariosPage() {
           email: vars.form.email,
           cargo: vars.form.cargo || null,
           role: vars.form.role,
+          territorio: isAdmin ? territorioFromForm(vars.form) : undefined,
         },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users-list"] });
       setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["user-territorios"] });
       setEditing(null);
       toast.success("✅ Usuário atualizado com sucesso!");
     },
@@ -735,12 +775,13 @@ function UsuariosPage() {
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-md mx-4 sm:mx-auto">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Usuário</DialogTitle>
           </DialogHeader>
           <UserFormFields
-            initial={{ full_name: "", email: "", cargo: "", role: "user" }}
+            initial={{ full_name: "", email: "", cargo: "", role: "user", nivel: "", regional: "", municipio_ibge: "" }}
+            canManageTerritorio={isAdmin}
             saving={createMutation.isPending}
             onClose={() => setCreateOpen(false)}
             onSubmit={(form) => createMutation.mutate(form)}
@@ -757,18 +798,24 @@ function UsuariosPage() {
           if (!o) setEditing(null);
         }}
       >
-        <DialogContent className="max-w-md mx-4 sm:mx-auto">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Usuário</DialogTitle>
           </DialogHeader>
-          {editing && (
+          {isAdmin && territoriosQuery.isPending && <p className="text-sm text-muted-foreground">Carregando território...</p>}
+          {isAdmin && territoriosQuery.isError && <div role="alert" className="text-sm text-destructive">Não foi possível carregar o território. <Button variant="ghost" onClick={() => void territoriosQuery.refetch()}>Tentar novamente</Button></div>}
+          {editing && (!isAdmin || territoriosQuery.isSuccess) && (
             <UserFormFields
               initial={{
                 full_name: editing.full_name ?? "",
                 email: editing.email ?? "",
                 cargo: editing.cargo ?? "",
                 role: editing.role,
+                nivel: (territoriosQuery.data?.find(t => t.user_id === editing.id)?.nivel as UserTerritorio["nivel"] | undefined) ?? "",
+                regional: territoriosQuery.data?.find(t => t.user_id === editing.id)?.regional ?? "",
+                municipio_ibge: territoriosQuery.data?.find(t => t.user_id === editing.id)?.municipio_ibge ?? "",
               }}
+              canManageTerritorio={isAdmin}
               saving={editMutation.isPending}
               onClose={() => {
                 setEditOpen(false);
@@ -933,12 +980,14 @@ function UserFormFields({
   onClose,
   onSubmit,
   submitLabel,
+  canManageTerritorio,
 }: {
   initial: FormState;
   saving: boolean;
   onClose: () => void;
   onSubmit: (f: FormState) => void;
   submitLabel: string;
+  canManageTerritorio: boolean;
 }) {
   const [form, setForm] = useState<FormState>(initial);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -947,20 +996,24 @@ function UserFormFields({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((p) => {
       const next = { ...p, [k]: v };
-      if (touched[k]) setErrors(validateForm(next));
+      if (k === "nivel") {
+        next.regional = "";
+        next.municipio_ibge = "";
+      } else if (k === "regional") next.municipio_ibge = "";
+      if (touched[k]) setErrors(validateForm(next, canManageTerritorio));
       return next;
     });
   };
 
   const blur = (k: keyof FormState) => {
     setTouched((p) => ({ ...p, [k]: true }));
-    setErrors(validateForm(form));
+    setErrors(validateForm(form, canManageTerritorio));
   };
 
   const handleSubmit = () => {
-    const errs = validateForm(form);
+    const errs = validateForm(form, canManageTerritorio);
     setErrors(errs);
-    setTouched({ full_name: true, email: true, cargo: true, role: true });
+    setTouched({ full_name: true, email: true, cargo: true, role: true, nivel: true, regional: true, municipio_ibge: true });
     if (Object.keys(errs).length > 0) {
       toast.warning("⚠️ Corrija os campos destacados.");
       return;
@@ -1037,6 +1090,37 @@ function UserFormFields({
           <p className="text-xs text-destructive">{errors.role}</p>
         )}
       </div>
+
+      {canManageTerritorio && <div className="space-y-4">
+        <div className="space-y-1">
+          <Label htmlFor="territorio-nivel">Nível *</Label>
+          <Select value={form.nivel} onValueChange={v => set("nivel", v as UserTerritorio["nivel"])} disabled={saving}>
+            <SelectTrigger id="territorio-nivel" aria-invalid={!!errors.nivel}><SelectValue placeholder="Selecione o nível" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="municipal">Municipal</SelectItem>
+              <SelectItem value="regional">Regional</SelectItem>
+              <SelectItem value="estadual">Estadual</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.nivel && <p className="text-xs text-destructive">{errors.nivel}</p>}
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="territorio-regional">Regional{form.nivel && form.nivel !== "estadual" ? " *" : ""}</Label>
+          <Select value={form.regional} onValueChange={v => set("regional", v)} disabled={saving || !form.nivel || form.nivel === "estadual"}>
+            <SelectTrigger id="territorio-regional" aria-invalid={!!errors.regional}><SelectValue placeholder={form.nivel === "estadual" ? "Todas as regionais" : "Selecione a regional"} /></SelectTrigger>
+            <SelectContent>{TERRITORIO_REGIONAIS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+          </Select>
+          {errors.regional && <p className="text-xs text-destructive">{errors.regional}</p>}
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="territorio-municipio">Município{form.nivel === "municipal" ? " *" : ""}</Label>
+          <Select value={form.municipio_ibge} onValueChange={v => set("municipio_ibge", v)} disabled={saving || form.nivel !== "municipal" || !form.regional}>
+            <SelectTrigger id="territorio-municipio" aria-invalid={!!errors.municipio_ibge}><SelectValue placeholder={form.nivel === "estadual" || form.nivel === "regional" ? "Todos os municípios" : "Selecione o município"} /></SelectTrigger>
+            <SelectContent>{TERRITORIO_MUNICIPIOS.filter(m => m.regional === form.regional).map(m => <SelectItem key={m.ibge} value={m.ibge}>{m.nome}</SelectItem>)}</SelectContent>
+          </Select>
+          {errors.municipio_ibge && <p className="text-xs text-destructive">{errors.municipio_ibge}</p>}
+        </div>
+      </div>}
 
       <p className="text-xs text-muted-foreground bg-muted/40 border border-border/60 rounded-md p-3">
         Ao salvar, o usuário receberá um e-mail com a senha temporária e o link para o primeiro acesso.
