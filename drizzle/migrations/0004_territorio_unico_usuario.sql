@@ -1,0 +1,1 @@
+ALTER TABLE public.user_territorios ADD CONSTRAINT user_territorios_user_unique UNIQUE(user_id);
