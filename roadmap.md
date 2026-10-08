@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Listar políticas atuais e propostas de SELECT/UPDATE/DELETE das 14 tabelas de casos.
+- [ ] Aplicar RLS por território após confirmação; bloqueios: 11 tabelas sem IBGE de residência e definição de território para Epizootia/Surto DTA, usuários ainda sem territórios.
 - [ ] Criar territórios de usuários e função pode_ver sem alterar políticas de casos.
 - [ ] Adicionar território aos formulários de criar/editar usuários e validar segurança e gravação.
 
