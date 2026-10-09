@@ -36,6 +36,13 @@
       "when": 1791384291230,
       "tag": "0004_territorio_unico_usuario",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791556749681,
+      "tag": "0005_cases_rls_territorio",
+      "breakpoints": true
     }
   ]
 }
