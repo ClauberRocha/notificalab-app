@@ -1,10 +1,10 @@
 # Roadmap
 
 - [x] Listar políticas atuais e propostas de SELECT/UPDATE/DELETE das 14 tabelas de casos.
-- [ ] Preparar códigos IBGE e ativar RLS nos 14 agravos conforme confirmação; Epizootia/Surto DTA usam ocorrência, ativação imediata autorizada.
-- [ ] Validar SELECT/UPDATE/DELETE territoriais e preservação de INSERT, sem alterações no front-end.
-- [ ] Criar territórios de usuários e função pode_ver sem alterar políticas de casos.
-- [ ] Adicionar território aos formulários de criar/editar usuários e validar segurança e gravação.
+- [x] Preparar códigos IBGE e ativar RLS nos 14 agravos conforme confirmação; Epizootia/Surto DTA usam ocorrência, ativação imediata autorizada.
+- [x] Validar SELECT/UPDATE/DELETE territoriais e preservação das políticas INSERT, sem alterações no front-end.
+- [x] Criar territórios de usuários e função pode_ver.
+- [x] Adicionar território aos formulários de criar/editar usuários e validar segurança e gravação; níveis municipal/regional/estadual testados com rollback.
 
 - [x] Gerar e configurar os ícones PWA.
 - [x] Injetar manifesto e registrar o service worker com proteção de preview.
