@@ -288,6 +288,7 @@ export type Database = {
           cep: string | null
           classificacao: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -363,6 +364,7 @@ export type Database = {
           cep?: string | null
           classificacao?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -438,6 +440,7 @@ export type Database = {
           cep?: string | null
           classificacao?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -1037,6 +1040,7 @@ export type Database = {
           cep: string | null
           classificacao_final: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           complemento: string | null
@@ -1112,6 +1116,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           complemento?: string | null
@@ -1187,6 +1192,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           complemento?: string | null
@@ -1271,6 +1277,7 @@ export type Database = {
           cep: string | null
           classificacao_final: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           complemento: string | null
@@ -1358,6 +1365,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           complemento?: string | null
@@ -1445,6 +1453,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           complemento?: string | null
@@ -1530,6 +1539,7 @@ export type Database = {
           cep: string | null
           classificacao_operacional: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -1590,6 +1600,7 @@ export type Database = {
           cep?: string | null
           classificacao_operacional?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -1650,6 +1661,7 @@ export type Database = {
           cep?: string | null
           classificacao_operacional?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -2033,6 +2045,7 @@ export type Database = {
           cep: string | null
           classificacao_final: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -2115,6 +2128,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -2197,6 +2211,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -2280,6 +2295,7 @@ export type Database = {
           classificacao_final: string | null
           codigo_cnes: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           created_at: string
           criterio_confirmacao: string | null
@@ -2352,6 +2368,7 @@ export type Database = {
           classificacao_final?: string | null
           codigo_cnes?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           created_at?: string
           criterio_confirmacao?: string | null
@@ -2424,6 +2441,7 @@ export type Database = {
           classificacao_final?: string | null
           codigo_cnes?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           created_at?: string
           criterio_confirmacao?: string | null
@@ -2523,6 +2541,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_ocorrencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           coletadas_amostras_alimentos: string | null
@@ -2590,6 +2609,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_ocorrencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           coletadas_amostras_alimentos?: string | null
@@ -2657,6 +2677,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_ocorrencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           coletadas_amostras_alimentos?: string | null
@@ -2769,6 +2790,7 @@ export type Database = {
           cep: string | null
           classificacao_final: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -2836,6 +2858,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -2903,6 +2926,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -2974,6 +2998,7 @@ export type Database = {
           cep: string | null
           classificacao_final: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -3044,6 +3069,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -3114,6 +3140,7 @@ export type Database = {
           cep?: string | null
           classificacao_final?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -3185,6 +3212,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           codigo_ibge_notificacao: string | null
+          codigo_ibge_residencia: string | null
           codigo_unidade_investigador: string | null
           codigo_unidade_saude: string | null
           created_at: string
@@ -3249,6 +3277,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -3313,6 +3342,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           codigo_ibge_notificacao?: string | null
+          codigo_ibge_residencia?: string | null
           codigo_unidade_investigador?: string | null
           codigo_unidade_saude?: string | null
           created_at?: string
@@ -3505,6 +3535,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      territorio_codigo_ibge: {
+        Args: { p_municipio: string; p_uf?: string }
+        Returns: string
       }
       territorio_regional: {
         Args: { p_municipio_ibge: string }
