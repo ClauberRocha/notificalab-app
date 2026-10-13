@@ -52,6 +52,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           distrito: string | null
           doenca_relacionada_trabalho: string | null
           doses_vacina_triplice: string | null
@@ -65,6 +67,7 @@ export type Database = {
           identificacao_comunicantes: string | null
           logradouro: string | null
           medidas_prevencao: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -139,6 +142,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doses_vacina_triplice?: string | null
@@ -152,6 +157,7 @@ export type Database = {
           identificacao_comunicantes?: string | null
           logradouro?: string | null
           medidas_prevencao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -226,6 +232,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doses_vacina_triplice?: string | null
@@ -239,6 +247,7 @@ export type Database = {
           identificacao_comunicantes?: string | null
           logradouro?: string | null
           medidas_prevencao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -306,6 +315,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           dengue_grave: string | null
           dengue_sinais_alarme: string | null
           doencas_preexistentes: Json | null
@@ -316,6 +327,7 @@ export type Database = {
           id: string
           idade: number | null
           logradouro: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -382,6 +394,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           dengue_grave?: string | null
           dengue_sinais_alarme?: string | null
           doencas_preexistentes?: Json | null
@@ -392,6 +406,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -458,6 +473,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           dengue_grave?: string | null
           dengue_sinais_alarme?: string | null
           doencas_preexistentes?: Json | null
@@ -468,6 +485,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -546,6 +564,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           distrito: string | null
           doenca_relacionada_trabalho: string | null
           doses_vacina: string | null
@@ -561,6 +581,7 @@ export type Database = {
           logradouro: string | null
           material_coletado: string | null
           medidas_prevencao: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -636,6 +657,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doses_vacina?: string | null
@@ -651,6 +674,7 @@ export type Database = {
           logradouro?: string | null
           material_coletado?: string | null
           medidas_prevencao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -726,6 +750,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doses_vacina?: string | null
@@ -741,6 +767,7 @@ export type Database = {
           logradouro?: string | null
           material_coletado?: string | null
           medidas_prevencao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -893,6 +920,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           distrito: string | null
           fonte_informacao: string | null
           funcao_investigador: string | null
@@ -902,6 +931,7 @@ export type Database = {
           id: string
           logradouro: string | null
           material_coletado: Json | null
+          motivo_exclusao: string | null
           municipio_notificacao: string
           municipio_ocorrencia: string | null
           municipio_unidade_investigador: string | null
@@ -946,6 +976,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           fonte_informacao?: string | null
           funcao_investigador?: string | null
@@ -955,6 +987,7 @@ export type Database = {
           id?: string
           logradouro?: string | null
           material_coletado?: Json | null
+          motivo_exclusao?: string | null
           municipio_notificacao: string
           municipio_ocorrencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -999,6 +1032,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           fonte_informacao?: string | null
           funcao_investigador?: string | null
@@ -1008,6 +1043,7 @@ export type Database = {
           id?: string
           logradouro?: string | null
           material_coletado?: Json | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string
           municipio_ocorrencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -1065,6 +1101,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           endereco_contato: string | null
           escolaridade: string | null
           evolucao: string | null
@@ -1073,6 +1111,7 @@ export type Database = {
           id: string
           idade: number | null
           logradouro: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -1141,6 +1180,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           endereco_contato?: string | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -1149,6 +1190,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1217,6 +1259,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           endereco_contato?: string | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -1225,6 +1269,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1300,6 +1345,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           doenca_relacionada_trabalho: string | null
           escolaridade: string | null
           evolucao: string | null
@@ -1312,6 +1359,7 @@ export type Database = {
           isolamento_virus_mosquitos: string | null
           logradouro: string | null
           material_coletado_isolamento: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -1388,6 +1436,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           doenca_relacionada_trabalho?: string | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -1400,6 +1450,7 @@ export type Database = {
           isolamento_virus_mosquitos?: string | null
           logradouro?: string | null
           material_coletado_isolamento?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1476,6 +1527,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           doenca_relacionada_trabalho?: string | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -1488,6 +1541,7 @@ export type Database = {
           isolamento_virus_mosquitos?: string | null
           logradouro?: string | null
           material_coletado_isolamento?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1553,6 +1607,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           escolaridade: string | null
           esquema_terapeutico: string | null
           forma_clinica: string | null
@@ -1564,6 +1620,7 @@ export type Database = {
           logradouro: string | null
           modo_deteccao: string | null
           modo_entrada: string | null
+          motivo_exclusao: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
           municipio_unidade_investigador: string | null
@@ -1614,6 +1671,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade?: string | null
           esquema_terapeutico?: string | null
           forma_clinica?: string | null
@@ -1625,6 +1684,7 @@ export type Database = {
           logradouro?: string | null
           modo_deteccao?: string | null
           modo_entrada?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -1675,6 +1735,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade?: string | null
           esquema_terapeutico?: string | null
           forma_clinica?: string | null
@@ -1686,6 +1748,7 @@ export type Database = {
           logradouro?: string | null
           modo_deteccao?: string | null
           modo_entrada?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -1749,6 +1812,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           distrito: string | null
           doenca_relacionada_trabalho: string | null
           doencas_preexistentes: Json | null
@@ -1764,6 +1829,7 @@ export type Database = {
           idade: number | null
           logradouro: string | null
           macroregiao: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -1837,6 +1903,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doencas_preexistentes?: Json | null
@@ -1852,6 +1920,7 @@ export type Database = {
           idade?: number | null
           logradouro?: string | null
           macroregiao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -1925,6 +1994,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           distrito?: string | null
           doenca_relacionada_trabalho?: string | null
           doencas_preexistentes?: Json | null
@@ -1940,6 +2011,7 @@ export type Database = {
           idade?: number | null
           logradouro?: string | null
           macroregiao?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2069,6 +2141,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           diagnostico_laboratorial: Json | null
           doenca_relacionada_trabalho: string | null
           escolaridade: string | null
@@ -2083,6 +2157,7 @@ export type Database = {
           infiltracao_soro_ferimento: string | null
           localizacao_exposicao: Json | null
           logradouro: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -2152,6 +2227,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           diagnostico_laboratorial?: Json | null
           doenca_relacionada_trabalho?: string | null
           escolaridade?: string | null
@@ -2166,6 +2243,7 @@ export type Database = {
           infiltracao_soro_ferimento?: string | null
           localizacao_exposicao?: Json | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2235,6 +2313,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           diagnostico_laboratorial?: Json | null
           doenca_relacionada_trabalho?: string | null
           escolaridade?: string | null
@@ -2249,6 +2329,7 @@ export type Database = {
           infiltracao_soro_ferimento?: string | null
           localizacao_exposicao?: Json | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2317,6 +2398,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           diagnostico_etiologico: Json | null
           escolaridade: string | null
           evolucao: string | null
@@ -2327,6 +2410,7 @@ export type Database = {
           idade: number | null
           internado_uti: string | null
           logradouro: string | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -2390,6 +2474,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           diagnostico_etiologico?: Json | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -2400,6 +2486,7 @@ export type Database = {
           idade?: number | null
           internado_uti?: string | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2463,6 +2550,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           diagnostico_etiologico?: Json | null
           escolaridade?: string | null
           evolucao?: string | null
@@ -2473,6 +2562,7 @@ export type Database = {
           idade?: number | null
           internado_uti?: string | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2559,6 +2649,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           fatores_causais: Json | null
           funcao_investigador: string | null
           id: string
@@ -2569,6 +2661,7 @@ export type Database = {
           mediana_periodo_incubacao: number | null
           medidas_adotadas: string | null
           modo_transmissao: string | null
+          motivo_exclusao: string | null
           municipio_notificacao: string
           municipio_ocorrencia: string | null
           municipio_unidade_investigador: string | null
@@ -2627,6 +2720,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           fatores_causais?: Json | null
           funcao_investigador?: string | null
           id?: string
@@ -2637,6 +2732,7 @@ export type Database = {
           mediana_periodo_incubacao?: number | null
           medidas_adotadas?: string | null
           modo_transmissao?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao: string
           municipio_ocorrencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -2695,6 +2791,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           fatores_causais?: Json | null
           funcao_investigador?: string | null
           id?: string
@@ -2705,6 +2803,7 @@ export type Database = {
           mediana_periodo_incubacao?: number | null
           medidas_adotadas?: string | null
           modo_transmissao?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string
           municipio_ocorrencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -2808,6 +2907,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           escolaridade: string | null
           evolucao: string | null
           funcao_investigador: string | null
@@ -2819,6 +2920,7 @@ export type Database = {
           logradouro: string | null
           manifestacoes_clinicas: Json | null
           medidas_controle: Json | null
+          motivo_exclusao: string | null
           municipio_hospital: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
@@ -2876,6 +2978,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade?: string | null
           evolucao?: string | null
           funcao_investigador?: string | null
@@ -2887,6 +2991,7 @@ export type Database = {
           logradouro?: string | null
           manifestacoes_clinicas?: Json | null
           medidas_controle?: Json | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -2944,6 +3049,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade?: string | null
           evolucao?: string | null
           funcao_investigador?: string | null
@@ -2955,6 +3062,7 @@ export type Database = {
           logradouro?: string | null
           manifestacoes_clinicas?: Json | null
           medidas_controle?: Json | null
+          motivo_exclusao?: string | null
           municipio_hospital?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
@@ -3019,6 +3127,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           escolaridade_mae: string | null
           evolucao: string | null
           funcao_investigador: string | null
@@ -3030,6 +3140,7 @@ export type Database = {
           local_residencia_coberta: string | null
           logradouro: string | null
           medidas_adotadas: Json | null
+          motivo_exclusao: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
           municipio_unidade_investigador: string | null
@@ -3090,6 +3201,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade_mae?: string | null
           evolucao?: string | null
           funcao_investigador?: string | null
@@ -3101,6 +3214,7 @@ export type Database = {
           local_residencia_coberta?: string | null
           logradouro?: string | null
           medidas_adotadas?: Json | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -3161,6 +3275,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           escolaridade_mae?: string | null
           evolucao?: string | null
           funcao_investigador?: string | null
@@ -3172,6 +3288,7 @@ export type Database = {
           local_residencia_coberta?: string | null
           logradouro?: string | null
           medidas_adotadas?: Json | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -3227,6 +3344,8 @@ export type Database = {
           dc_houve_hospitalizacao: string | null
           dc_sintomas: string | null
           dc_sintomas_outros: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           doencas_agravos_associados: Json | null
           escolaridade: string | null
           forma: string | null
@@ -3237,6 +3356,7 @@ export type Database = {
           id: string
           idade: number | null
           logradouro: string | null
+          motivo_exclusao: string | null
           municipio_notificacao: string | null
           municipio_residencia: string | null
           municipio_unidade_investigador: string | null
@@ -3292,6 +3412,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           doencas_agravos_associados?: Json | null
           escolaridade?: string | null
           forma?: string | null
@@ -3302,6 +3424,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
@@ -3357,6 +3480,8 @@ export type Database = {
           dc_houve_hospitalizacao?: string | null
           dc_sintomas?: string | null
           dc_sintomas_outros?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           doencas_agravos_associados?: Json | null
           escolaridade?: string | null
           forma?: string | null
@@ -3367,6 +3492,7 @@ export type Database = {
           id?: string
           idade?: number | null
           logradouro?: string | null
+          motivo_exclusao?: string | null
           municipio_notificacao?: string | null
           municipio_residencia?: string | null
           municipio_unidade_investigador?: string | null
