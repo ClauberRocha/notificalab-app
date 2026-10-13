@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { recordCaseAudit } from "@/lib/case-audit.functions";
 
 export type LogAction =
   | "login"
@@ -6,6 +7,9 @@ export type LogAction =
   | "create"
   | "update"
   | "delete"
+  | "view_case"
+  | "export_pdf"
+  | "export_csv"
   | "invite_user"
   | "block_user"
   | "other";
@@ -20,6 +24,10 @@ export interface LogInput {
 
 export async function logAction(input: LogInput): Promise<void> {
   try {
+    if (["view_case", "export_pdf", "export_csv", "delete"].includes(input.action)) {
+      await recordCaseAudit({ data: input });
+      return;
+    }
     const { data: auth } = await supabase.auth.getUser();
     const u = auth.user;
 
