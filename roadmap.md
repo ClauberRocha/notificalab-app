@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Tornar system_logs não apagável e remover exclusão na tela de logs.
+- [ ] Implementar exclusão lógica com motivo nos 14 agravos e omitir excluídos das listas, painel e visão.
+- [ ] Auditar visualização de fichas e exportações PDF/CSV; validar regras e fluxos.
+
 - [x] Listar políticas atuais e propostas de SELECT/UPDATE/DELETE das 14 tabelas de casos.
 - [x] Preparar códigos IBGE e ativar RLS nos 14 agravos conforme confirmação; Epizootia/Surto DTA usam ocorrência, ativação imediata autorizada.
 - [x] Validar SELECT/UPDATE/DELETE territoriais e preservação das políticas INSERT, sem alterações no front-end.
