@@ -826,7 +826,7 @@ function PainelPage() {
     const rows: CaseRow[] = [];
     const cutoff = new Date().toISOString();
     for (let offset = 0; ; offset += 1000) {
-      let query = (supabase as any).from(agravo.table).select("*").lte("created_at", cutoff).order("created_at", { ascending: false }).order("id", { ascending: true });
+      let query = (supabase as any).from(agravo.table).select("*").is("deleted_at", null).lte("created_at", cutoff).order("created_at", { ascending: false }).order("id", { ascending: true });
       if (selectedMunicipio !== "all") query = query.eq("municipio_notificacao", selectedMunicipio);
       if (selectedStatus !== "all") query = query.eq("status", selectedStatus);
       const { data, error } = await query.range(offset, offset + 999);
@@ -885,6 +885,7 @@ function PainelPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    await logAction({ action: "export_csv", entity_type: "painel", description: "Exportação nominal do painel em CSV", metadata: { agravo: selectedAgravo, quantidade: filtered.length, tipo: "fichas" } });
     toast.success("CSV exportado com sucesso!");
     } catch { toast.error("Falha ao buscar as fichas para exportação. Tente novamente."); }
     finally { setExporting(false); }
@@ -2043,6 +2044,7 @@ ${criterioData.slice(0, 5).map(([name, count]) => `- **${name}**: ${count} casos
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
+                      await logAction({ action: "export_csv", entity_type: "painel", description: "Exportação de inconsistências em CSV", metadata: { agravo: selectedAgravo, quantidade: incomplete.length, tipo: "inconsistencias" } });
                       toast.success("Relatório de inconsistências baixado!");
                       } catch { toast.error("Falha ao buscar as fichas para exportação."); }
                       finally { setExporting(false); }

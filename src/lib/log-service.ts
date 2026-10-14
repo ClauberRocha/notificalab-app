@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { recordCaseAudit } from "@/lib/case-audit.functions";
+import { CASE_TABLES } from "@/lib/case-lifecycle";
 
 export type LogAction =
   | "login"
@@ -24,8 +25,15 @@ export interface LogInput {
 
 export async function logAction(input: LogInput): Promise<void> {
   try {
-    if (["view_case", "export_pdf", "export_csv", "delete"].includes(input.action)) {
-      await recordCaseAudit({ data: input });
+    const isCaseTable = CASE_TABLES.some((table) => table === input.entity_type);
+    if (["view_case", "export_pdf", "export_csv"].includes(input.action) || (input.action === "delete" && isCaseTable)) {
+      await recordCaseAudit({ data: {
+        action: input.action as "view_case" | "export_pdf" | "export_csv" | "delete",
+        entity_type: (input.entity_type ?? "painel") as (typeof CASE_TABLES)[number] | "painel",
+        entity_id: input.entity_id,
+        description: input.description,
+        metadata: input.metadata as { agravo?: string; quantidade?: number; tipo?: string } | undefined,
+      } });
       return;
     }
     const { data: auth } = await supabase.auth.getUser();

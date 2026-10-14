@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Children, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { updateCase, deleteCase } from "@/lib/offline/db";
+import { updateCase } from "@/lib/offline/db";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,17 +33,9 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { getSemanaEpidemiologica } from "@/data/semana-epd";
 import { getSeNumber } from "@/lib/seUtils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { SoftDeleteCaseDialog } from "@/components/soft-delete-case-dialog";
+import { useCaseViewAudit } from "@/hooks/use-case-view-audit";
+import { logAction } from "@/lib/log-service";
 
 type AnyObj = Record<string, unknown>;
 type TableName = keyof Database["public"]["Tables"];
@@ -559,24 +551,14 @@ export function CaseDetail({
         .from(tableName as never)
         .select("*")
         .eq("id", id)
+        .is("deleted_at", null)
         .maybeSingle();
       if (error) throw error;
       return (data as AnyObj | null) ?? null;
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await deleteCase(tableName, id);
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: listKey });
-      toast.success("Ficha excluída.");
-      navigate({ to: listPath });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  useCaseViewAudit(tableName, id, Boolean(ficha));
 
   const encerrarMutation = useMutation({
     mutationFn: async () => {
@@ -658,6 +640,7 @@ export function CaseDetail({
         filename: `${nome}_${id.slice(0, 8)}`,
       });
       if (result.ok) {
+        await logAction({ action: "export_pdf", entity_type: tableName, entity_id: id, description: "Exportação de ficha em PDF", metadata: { agravo } });
         toast.success(`PDF exportado (${result.pages} pág, ${result.totalMs.toFixed(0)}ms).`);
       } else {
         const isColor = result.logs.some(
@@ -876,30 +859,14 @@ export function CaseDetail({
             </>
           )}
           {!editing && canDelete && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <SoftDeleteCaseDialog table={tableName} id={id} onDeleted={() => navigate({ to: listPath })}>
                 <Button
                   variant="outline"
                   className="gap-2 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="w-4 h-4" /> Excluir
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir ficha?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Essa ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteMutation.mutate()}>
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            </SoftDeleteCaseDialog>
           )}
         </div>
       </div>
