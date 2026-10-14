@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Children, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteCase, updateCase } from "@/lib/offline/db";
+import { updateCase } from "@/lib/offline/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,17 +11,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, differenceInDays } from "date-fns";
 import { getSeNumber } from "@/lib/seUtils";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { SoftDeleteCaseDialog } from "@/components/soft-delete-case-dialog";
+import { useCaseViewAudit } from "@/hooks/use-case-view-audit";
 
 export const Route = createFileRoute("/_authenticated/fichas/difteria/$id")({
   head: () => ({ meta: [{ title: "Detalhes da Ficha — Difteria" }] }),
@@ -138,24 +129,14 @@ function FichaDifteriaDetalhesPage() {
         .from("difteria_cases")
         .select("*")
         .eq("id", id)
+        .is("deleted_at", null)
         .maybeSingle();
       if (error) throw error;
       return data as AnyObj | null;
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await deleteCase("difteria_cases", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["difteria-cases"] });
-      toast.success("Ficha excluída.");
-      navigate({ to: "/fichas/difteria" });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  useCaseViewAudit("difteria_cases", id, Boolean(ficha));
 
   const encerrarMutation = useMutation({
     mutationFn: async () => {
@@ -274,30 +255,14 @@ function FichaDifteriaDetalhesPage() {
             </Button>
           )}
           {canDelete && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <SoftDeleteCaseDialog table="difteria_cases" id={id} onDeleted={() => navigate({ to: "/fichas/difteria" })}>
                 <Button
                   variant="outline"
                   className="gap-2 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="w-4 h-4" /> Excluir
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir ficha?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Essa ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteMutation.mutate()}>
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            </SoftDeleteCaseDialog>
           )}
         </div>
       </div>

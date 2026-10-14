@@ -53,6 +53,7 @@ export function AgravoListPage({
       .from("dengue_chikungunya_cases")
       .select("id, numero_ficha, nome_paciente, data_notificacao, status, classificacao, created_at")
       .eq("agravo", agravo)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) setError(error.message);
     else {

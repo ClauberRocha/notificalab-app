@@ -15,3 +15,4 @@
 - User territories use one canonical row per user; admin-verified server functions manage and read other users' territories while direct RLS reads remain owner-only. SQL territory lookup and form options share the official IBGE municipality codes and existing regional mapping.
 - Case SELECT/UPDATE/DELETE policies combine their existing authorization conditions with pode_ver on residence IBGE (occurrence IBGE for event tables); UPDATE checks old and new rows, and INSERT policies remain unchanged to preserve existing creation rights.
 - Case territory IBGE columns are filled from official municipality names/codes by database triggers when missing or when municipality/UF changes, without frontend dependencies; unresolved or out-of-state names remain null to avoid assigning incorrect territories.
+- Case removal is soft deletion with a mandatory reason; active-case queries filter `deleted_at`, while database guards preserve cases and audit logs permanently.
