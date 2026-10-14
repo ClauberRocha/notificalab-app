@@ -79,6 +79,7 @@ export function MeningiteListPage({ agravo }: { agravo: MeningiteAgravo }) {
         .from("meningite_cases")
         .select("id, numero_ficha, nome_paciente, data_notificacao, status, classificacao_caso, especificacao_confirmado, created_at")
         .eq("agravo", agravo)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);

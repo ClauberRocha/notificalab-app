@@ -50,6 +50,7 @@ function FichasEpizootiaPage() {
       const { data, error } = await supabase
         .from("epizootia_cases")
         .select("id, numero_ficha, municipio_notificacao, data_notificacao, status, ambiente, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);

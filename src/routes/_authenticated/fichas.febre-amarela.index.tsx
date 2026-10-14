@@ -56,6 +56,7 @@ function FichasFebreAmarelaPage() {
       const { data, error } = await supabase
         .from("febre_amarela_cases")
         .select("id, numero_ficha, nome_paciente, data_notificacao, status, classificacao_final, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);

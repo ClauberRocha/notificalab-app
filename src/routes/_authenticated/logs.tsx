@@ -1,8 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,25 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   Search,
-  Trash2,
   ClipboardList,
   RefreshCw,
   ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/logs")({
   head: () => ({ meta: [{ title: "Logs do Sistema" }] }),
@@ -55,6 +41,9 @@ const ACTION_LABELS: Record<string, string> = {
   create: "Criação",
   update: "Edição",
   delete: "Exclusão",
+  view_case: "Visualização de Ficha",
+  export_pdf: "Exportação PDF",
+  export_csv: "Exportação CSV",
   invite_user: "Convite de Usuário",
   block_user: "Bloqueio de Usuário",
   other: "Outro",
@@ -70,6 +59,9 @@ const ACTION_COLORS: Record<string, string> = {
   create: "bg-blue-100 text-blue-700 border-blue-200",
   update: "bg-yellow-100 text-yellow-700 border-yellow-200",
   delete: "bg-red-100 text-red-700 border-red-200",
+  view_case: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  export_pdf: "bg-rose-100 text-rose-700 border-rose-200",
+  export_csv: "bg-emerald-100 text-emerald-700 border-emerald-200",
   invite_user: "bg-purple-100 text-purple-700 border-purple-200",
   block_user: "bg-orange-100 text-orange-700 border-orange-200",
   other: "bg-muted text-muted-foreground border-border",
@@ -89,28 +81,8 @@ type LogRow = {
 };
 
 function LogsPage() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const [isAdmin, setIsAdmin] = useState(false);
-  useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    (async () => {
-      const { data } = await supabase
-        .from("user_roles" as never)
-        .select("role")
-        .eq("user_id", user.id);
-      const list = (data ?? []) as Array<{ role: string }>;
-      setIsAdmin(list.some((r) => r.role === "admin"));
-    })();
-  }, [user]);
-
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: logs = [], isLoading, refetch } = useQuery({
     queryKey: ["system-logs"],
@@ -127,22 +99,6 @@ function LogsPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      const { error } = await supabase
-        .from("system_logs" as never)
-        .delete()
-        .in("id", ids);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["system-logs"] });
-      setSelectedIds([]);
-      toast.success("Logs excluídos com sucesso.");
-    },
-    onError: (e: Error) => toast.error(e.message || "Erro ao excluir logs."),
-  });
-
   const filtered = logs.filter((log) => {
     const q = search.toLowerCase();
     const matchSearch =
@@ -154,16 +110,6 @@ function LogsPage() {
     const matchAction = actionFilter === "all" || log.action === actionFilter;
     return matchSearch && matchAction;
   });
-
-  const toggleSelect = (id: string) =>
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-
-  const toggleAll = () => {
-    if (selectedIds.length === filtered.length) setSelectedIds([]);
-    else setSelectedIds(filtered.map((l) => l.id));
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -218,40 +164,6 @@ function LogsPage() {
         </Select>
       </div>
 
-      {isAdmin && selectedIds.length > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-xl">
-          <span className="text-sm text-destructive font-medium">
-            {selectedIds.length} log(s) selecionado(s)
-          </span>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="gap-2 ml-auto">
-                <Trash2 className="w-4 h-4" /> Excluir Selecionados
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir Logs</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir{" "}
-                  <strong>{selectedIds.length}</strong> log(s) selecionado(s)?
-                  Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => deleteMutation.mutate(selectedIds)}
-                >
-                  Confirmar Exclusão
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
-
       <Card className="overflow-hidden">
         <CardHeader className="pb-2 pt-4 px-5">
           <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -262,19 +174,6 @@ function LogsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
-                {isAdmin && (
-                  <th className="px-4 py-3 w-10">
-                    <input
-                      type="checkbox"
-                      className="rounded"
-                      checked={
-                        selectedIds.length === filtered.length &&
-                        filtered.length > 0
-                      }
-                      onChange={toggleAll}
-                    />
-                  </th>
-                )}
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">
                   Data/Hora
                 </th>
@@ -302,7 +201,7 @@ function LogsPage() {
                   .map((_, i) => (
                     <tr key={i} className="border-b border-border/50">
                       <td
-                        colSpan={isAdmin ? 7 : 6}
+                        colSpan={6}
                         className="px-4 py-3"
                       >
                         <div className="h-4 bg-muted rounded animate-pulse w-full" />
@@ -312,7 +211,7 @@ function LogsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={isAdmin ? 7 : 6}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-muted-foreground"
                   >
                     Nenhum log encontrado.
@@ -322,20 +221,8 @@ function LogsPage() {
                 filtered.map((log) => (
                   <tr
                     key={log.id}
-                    className={`border-b border-border/50 hover:bg-muted/30 transition-colors ${
-                      selectedIds.includes(log.id) ? "bg-destructive/5" : ""
-                    }`}
+                    className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                   >
-                    {isAdmin && (
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          className="rounded"
-                          checked={selectedIds.includes(log.id)}
-                          onChange={() => toggleSelect(log.id)}
-                        />
-                      </td>
-                    )}
                     <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {log.created_at
                         ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm")
@@ -384,11 +271,6 @@ function LogsPage() {
         </div>
       </Card>
 
-      {!isAdmin && (
-        <p className="text-xs text-muted-foreground text-center">
-          Apenas administradores podem excluir registros de log.
-        </p>
-      )}
     </div>
   );
 }

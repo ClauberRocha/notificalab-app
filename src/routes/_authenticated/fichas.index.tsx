@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -13,17 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   Search,
   Plus,
@@ -44,7 +33,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getSemanaEpidemiologica } from "@/data/semana-epd";
 import { getSeNumber } from "@/lib/seUtils";
-import { deleteCase } from "@/lib/offline/db";
+import { SoftDeleteCaseDialog } from "@/components/soft-delete-case-dialog";
 import { useGlobalAgravo } from "@/lib/global-agravo";
 
 type SortDir = "asc" | "desc";
@@ -243,6 +232,7 @@ async function fetchByAgravo(tipo: string): Promise<CaseRow[]> {
         .select(
           `id, numero_ficha, nome_paciente, municipio_notificacao, status, created_at, agravo, ${a.dateField}`,
         )
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) return [];
@@ -272,7 +262,6 @@ async function fetchByAgravo(tipo: string): Promise<CaseRow[]> {
 
 
 export function FichasListPage() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { can } = useAuth();
   const canDelete = can("fichas.delete");
@@ -403,20 +392,6 @@ export function FichasListPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice(page * pageSize, (page + 1) * pageSize);
-
-  async function handleDelete(caso: CaseRow) {
-    const { error, localOnly } = await deleteCase(caso._table, caso.id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(
-      localOnly
-        ? "Ficha removida localmente — será apagada do servidor quando a internet voltar."
-        : "Ficha excluída.",
-    );
-    queryClient.invalidateQueries({ queryKey: ["fichas"] });
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -703,8 +678,7 @@ export function FichasListPage() {
                             </Button>
                           )}
                           {canDelete && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
+                            <SoftDeleteCaseDialog table={c._table} id={c.id}>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -714,29 +688,7 @@ export function FichasListPage() {
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir Ficha</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir a ficha de{" "}
-                                    <strong>
-                                      {c.nome_paciente || "este paciente"}
-                                    </strong>
-                                    ? Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() => handleDelete(c)}
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            </SoftDeleteCaseDialog>
                           )}
                         </div>
                       </td>
