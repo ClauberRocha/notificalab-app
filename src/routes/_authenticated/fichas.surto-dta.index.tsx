@@ -52,6 +52,7 @@ function FichasSurtoDtaPage() {
       const { data, error } = await supabase
         .from("surto_dta_cases")
         .select("id, numero_ficha, municipio_notificacao, municipio_ocorrencia, data_notificacao, status, numero_casos_suspeitos, numero_obitos, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);

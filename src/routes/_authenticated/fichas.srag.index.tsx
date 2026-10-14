@@ -64,6 +64,7 @@ function FichasSragPage() {
       const { data, error } = await supabase
         .from("srag_cases")
         .select("id, numero_ficha, nome_paciente, data_preenchimento, status, classificacao_final, evolucao, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);

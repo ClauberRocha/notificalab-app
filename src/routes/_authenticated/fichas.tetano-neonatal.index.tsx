@@ -64,6 +64,7 @@ function FichasTetanoNeonatalPage() {
       const { data, error } = await supabase
         .from("tetano_neonatal_cases")
         .select("id, numero_ficha, nome_paciente, nome_mae, data_notificacao, status, classificacao_final, evolucao, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (error) setError(error.message);
