@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useSidebar } from "@/components/ui/sidebar";
 import { logAuthEvent } from "@/lib/audit.functions";
 import { needsPasswordChange } from "@/lib/must-change-password";
+import { MfaGate } from "@/components/mfa-gate";
 
 
 type AppRole = "admin" | "gestor" | "user";
@@ -102,6 +103,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const { session, signOut } = useAuth();
+  const { role } = Route.useRouteContext();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -124,8 +126,8 @@ function AuthenticatedLayout() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+    if (newPassword.length < 10) {
+      toast.error("A senha deve ter pelo menos 10 caracteres.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -202,7 +204,7 @@ function AuthenticatedLayout() {
               <Input
                 id="new-password"
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 10 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
@@ -250,7 +252,10 @@ function AuthenticatedLayout() {
     );
   }
 
+  if (mustChange === null) return null;
+
   return (
+    <MfaGate role={role} onSignOut={() => signOut()}>
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
@@ -266,6 +271,7 @@ function AuthenticatedLayout() {
         </div>
       </div>
     </SidebarProvider>
+    </MfaGate>
   );
 }
 
