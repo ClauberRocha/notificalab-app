@@ -250,7 +250,10 @@ function AuthenticatedLayout() {
     );
   }
 
+  if (mustChange === null) return null;
+
   return (
+    <MfaGate role={role} onSignOut={() => signOut()}>
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
