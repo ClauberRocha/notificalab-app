@@ -15,6 +15,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { logAuthEvent } from "@/lib/audit.functions";
 import { needsPasswordChange } from "@/lib/must-change-password";
 import { MfaGate } from "@/components/mfa-gate";
+import { ConfidentialityGate } from "@/components/confidentiality-gate";
 
 
 type AppRole = "admin" | "gestor" | "user";
@@ -103,7 +104,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const { session, signOut } = useAuth();
-  const { role } = Route.useRouteContext();
+  const { role, user } = Route.useRouteContext();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -256,6 +257,7 @@ function AuthenticatedLayout() {
 
   return (
     <MfaGate role={role} onSignOut={() => signOut()}>
+    <ConfidentialityGate key={user.id} userId={user.id} onSignOut={() => signOut()}>
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
@@ -271,6 +273,7 @@ function AuthenticatedLayout() {
         </div>
       </div>
     </SidebarProvider>
+    </ConfidentialityGate>
     </MfaGate>
   );
 }
