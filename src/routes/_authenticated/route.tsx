@@ -124,8 +124,8 @@ function AuthenticatedLayout() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+    if (newPassword.length < 10) {
+      toast.error("A senha deve ter pelo menos 10 caracteres.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -202,7 +202,7 @@ function AuthenticatedLayout() {
               <Input
                 id="new-password"
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 10 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required

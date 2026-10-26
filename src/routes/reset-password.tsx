@@ -85,8 +85,8 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres");
+    if (password.length < 10) {
+      toast.error("A senha deve ter pelo menos 10 caracteres");
       return;
     }
     if (password !== confirm) {
@@ -158,7 +158,7 @@ function ResetPasswordPage() {
               <input
                 required
                 type="password"
-                minLength={8}
+                minLength={10}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -170,7 +170,7 @@ function ResetPasswordPage() {
               <input
                 required
                 type="password"
-                minLength={8}
+                minLength={10}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
