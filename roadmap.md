@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Criar registro protegido de aceites por usuário e versão.
+- [ ] Exigir aceite do termo vigente antes das telas e validar persistência.
+
 - [x] Tornar system_logs não apagável e remover exclusão na tela de logs.
 - [x] Implementar exclusão lógica com motivo nos 14 agravos e omitir excluídos das listas, painel e visão.
 - [x] Auditar visualização de fichas e exportações PDF/CSV; validar regras e fluxos.
