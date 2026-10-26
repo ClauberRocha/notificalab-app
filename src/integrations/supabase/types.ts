@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      aceites_termo: {
+        Row: {
+          aceito_em: string
+          user_id: string
+          versao_termo: string
+        }
+        Insert: {
+          aceito_em?: string
+          user_id: string
+          versao_termo: string
+        }
+        Update: {
+          aceito_em?: string
+          user_id?: string
+          versao_termo?: string
+        }
+        Relationships: []
+      }
       coqueluche_cases: {
         Row: {
           agravo: string
