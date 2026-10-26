@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useSidebar } from "@/components/ui/sidebar";
 import { logAuthEvent } from "@/lib/audit.functions";
 import { needsPasswordChange } from "@/lib/must-change-password";
+import { MfaGate } from "@/components/mfa-gate";
 
 
 type AppRole = "admin" | "gestor" | "user";
@@ -102,6 +103,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const { session, signOut } = useAuth();
+  const { role } = Route.useRouteContext();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -269,6 +271,7 @@ function AuthenticatedLayout() {
         </div>
       </div>
     </SidebarProvider>
+    </MfaGate>
   );
 }
 
