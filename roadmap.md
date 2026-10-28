@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Criar registro protegido de aceites por usuário e versão.
-- [ ] Exigir aceite do termo vigente antes das telas e validar persistência.
+- [x] Criar registro protegido de aceites por usuário e versão.
+- [x] Exigir aceite do termo vigente antes das telas; validar regras e modal isoladamente, sem registrar consentimento pelo usuário.
+- [ ] Confirmar fluxo completo após MFA e aceite real: serviço do autenticador retornou erro no teste; depende de acesso e aceite pelo usuário.
 
 - [x] Tornar system_logs não apagável e remover exclusão na tela de logs.
 - [x] Implementar exclusão lógica com motivo nos 14 agravos e omitir excluídos das listas, painel e visão.
